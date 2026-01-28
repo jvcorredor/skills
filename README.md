@@ -14,13 +14,12 @@ skills/
 │       ├── references/   # Additional documentation (optional)
 │       └── scripts/      # Helper scripts (optional)
 ├── scripts/
-│   └── package-skill.sh  # ZIP packaging for Claude.ai
+│   ├── install.sh        # Install plugin for Claude Code
+│   └── uninstall.sh      # Remove plugin
 └── README.md
 ```
 
-## Claude Code Integration
-
-Run the install script:
+## Installation
 
 ```bash
 ./scripts/install.sh
@@ -31,17 +30,6 @@ This will:
 2. Register the plugin in `~/.claude/plugins/installed_plugins.json`
 
 Restart Claude Code to use the plugin. New skills added to `skills/` will be available after restarting.
-
-## Claude.ai Integration
-
-Package individual skills as ZIPs for upload:
-
-```bash
-./scripts/package-skill.sh <skill-name>
-# Creates: dist/<skill-name>.zip
-```
-
-Upload the ZIP via Settings > Capabilities > Custom Skills in Claude.ai.
 
 ## Creating a New Skill
 
