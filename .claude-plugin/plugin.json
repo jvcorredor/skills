@@ -1,0 +1,7 @@
+{
+  "name": "skills",
+  "version": "0.1.0",
+  "description": "Personal skills for Kubernetes, infrastructure, and cloud engineering workflows",
+  "author": "Jack Hall",
+  "license": "MIT"
+}

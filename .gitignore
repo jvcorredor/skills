@@ -1,0 +1,13 @@
+# Build output
+dist/
+
+# Claude Code local state
+.claude/
+
+# OS files
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
