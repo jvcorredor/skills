@@ -20,17 +20,17 @@ skills/
 
 ## Claude Code Integration
 
-Register this repo as a local plugin:
+Run the install script:
 
 ```bash
-# Create the repos directory if it doesn't exist
-mkdir -p ~/.claude/plugins/repos
-
-# Symlink this repo
-ln -s /path/to/this/repo ~/.claude/plugins/repos/skills
+./scripts/install.sh
 ```
 
-Skills are available immediately after restarting Claude Code.
+This will:
+1. Symlink the repo to `~/.claude/plugins/repos/skills`
+2. Register the plugin in `~/.claude/plugins/installed_plugins.json`
+
+Restart Claude Code to use the plugin. New skills added to `skills/` will be available after restarting.
 
 ## Claude.ai Integration
 
