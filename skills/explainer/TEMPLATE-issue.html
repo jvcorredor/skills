@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{TITLE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  /* IDENTICAL across all four explainer templates.
+     If you change the palette / components here, change it in
+     TEMPLATE-pr.html, TEMPLATE-concept.html, TEMPLATE-research.html too. */
+  :root {
+    --bg: #0e1116;
+    --bg-elev: #161b22;
+    --bg-elev-2: #1c2230;
+    --border: #2a313c;
+    --fg: #e6edf3;
+    --fg-muted: #8b96a4;
+    --accent: #58a6ff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --diff-add: rgba(63, 185, 80, 0.12);
+    --diff-del: rgba(248, 81, 73, 0.12);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 0 0 80px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+    background: linear-gradient(180deg, #1c2230 0%, transparent 100%);
+  }
+  header.hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header.hero .lede { font-size: 16px; color: var(--fg-muted); margin: 0 0 16px; max-width: 800px; }
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 12px;
+    font-family: var(--mono); margin-right: 6px;
+  }
+  .pill a { color: var(--accent); text-decoration: none; }
+  .pill.good { color: var(--good); border-color: rgba(63, 185, 80, 0.4); }
+  .pill.warn { color: var(--warn); border-color: rgba(210, 153, 34, 0.4); }
+  .pill.bad  { color: var(--bad);  border-color: rgba(248, 81, 73, 0.4); }
+  h2 {
+    font-size: 22px; margin: 48px 0 16px; letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0 12px; }
+  code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-elev); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 16px; border-radius: 6px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+  }
+  pre.diff .add { background: var(--diff-add); display: block; }
+  pre.diff .del { background: var(--diff-del); display: block; }
+  .toggle-row {
+    display: inline-flex; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin: 8px 0 16px;
+  }
+  .toggle-row button {
+    background: transparent; color: var(--fg-muted); border: 0;
+    padding: 8px 16px; font: inherit; cursor: pointer; font-weight: 500;
+  }
+  .toggle-row button.active { background: var(--accent); color: #0e1116; }
+  .arch-frame { position: relative; }
+  .arch-pane { display: none; }
+  .arch-pane.active { display: block; }
+  .pipeline { display: grid; gap: 14px; }
+  .step {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+  .step .badge {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-weight: 600;
+    color: var(--accent);
+  }
+  .step h4 { margin: 0 0 4px; font-size: 14px; }
+  .step .desc { color: var(--fg-muted); font-size: 13px; }
+  .step.danger { border-color: rgba(248, 81, 73, 0.5); background: rgba(248,81,73,0.06); }
+  .step.danger .badge { color: var(--bad); border-color: rgba(248, 81, 73, 0.5); }
+  .step.good { border-color: rgba(63, 185, 80, 0.5); background: rgba(63,185,80,0.06); }
+  .step.good .badge { color: var(--good); border-color: rgba(63, 185, 80, 0.5); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+  }
+  .tag.danger { background: rgba(248, 81, 73, 0.15); color: var(--bad); border: 1px solid rgba(248,81,73,0.3); }
+  .tag.good   { background: rgba(63, 185, 80, 0.15); color: var(--good); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .tag.warn   { background: rgba(210, 153, 34, 0.15); color: var(--warn); border: 1px solid rgba(210, 153, 34, 0.3); }
+  .tag.neutral{ background: var(--bg-elev-2); color: var(--fg-muted); border: 1px solid var(--border); }
+  details {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; margin: 8px 0; padding: 0;
+  }
+  details > summary {
+    cursor: pointer; padding: 12px 16px; user-select: none;
+    font-weight: 500; display: flex; align-items: center; gap: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▶"; font-size: 9px; color: var(--fg-muted);
+    transition: transform 0.15s; display: inline-block;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details .inner { padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  details .role { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
+  .timeline { display: grid; gap: 12px; counter-reset: step; }
+  .tl-item {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px 14px 56px; position: relative;
+  }
+  .tl-item::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: 14px; top: 14px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    color: var(--accent); font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tl-item h4 { margin: 0 0 4px; font-size: 14px; }
+  .tl-item .meta { color: var(--fg-muted); font-size: 12px; margin-top: 6px; }
+  .tl-item.risk { border-left: 3px solid var(--warn); }
+  .tl-item.risk .meta { color: var(--warn); }
+  .tl-item[data-actor]::after {
+    content: attr(data-actor);
+    position: absolute; top: 14px; right: 14px;
+    font-family: var(--mono); font-size: 11px;
+    padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);
+  }
+  .tl-item.actor-op[data-actor]::after  { color: var(--warn);  background: rgba(210,153,34,0.1); border-color: rgba(210,153,34,0.3); }
+  .tl-item.actor-ci[data-actor]::after  { color: var(--accent);background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3); }
+  .tl-item.actor-bot[data-actor]::after { color: var(--good);  background: rgba(63,185,80,0.1);  border-color: rgba(63,185,80,0.3); }
+  .checklist label {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; margin: 6px 0; cursor: pointer;
+  }
+  .checklist input[type=checkbox] { margin-top: 2px; accent-color: var(--accent); }
+  .checklist .q { font-weight: 500; }
+  .checklist .why { color: var(--fg-muted); font-size: 13px; margin-top: 4px; display: block; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  th { color: var(--fg-muted); font-weight: 500; }
+  td code { font-size: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col h3 { margin-top: 0; }
+  .two-col .col {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .two-col .col.before  { border-left: 3px solid var(--bad); }
+  .two-col .col.after   { border-left: 3px solid var(--good); }
+  .two-col .col.known   { border-left: 3px solid var(--good); }
+  .two-col .col.unknown { border-left: 3px solid var(--warn); }
+  .mermaid {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center;
+  }
+  a { color: var(--accent); }
+  .small { font-size: 13px; color: var(--fg-muted); }
+  .topnav { font-family: var(--mono); font-size: 13px; }
+  .topnav a { color: var(--fg-muted); text-decoration: none; margin-right: 14px; }
+  .topnav a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ISSUE / STORY / EPIC explainer
+     Spine: observed/requested → known vs. unknown → model →
+            hypotheses-or-acceptance-or-scope → blast radius →
+            sequencing → risks → decide
+     ============================================================ -->
+
+<header class="hero">
+  <div class="container">
+    <span class="pill"><a href="{{ISSUE_URL}}" target="_blank">{{REPO}}#{{ISSUE_NUMBER}}</a></span>
+    <span class="pill">{{TYPE_BUG_OR_STORY_OR_EPIC}}</span>
+    <span class="pill {{SEVERITY_PILL_CLASS}}">{{SEVERITY_OR_PRIORITY}}</span>
+    <span class="pill">{{AREA_OR_COMPONENT}}</span>
+    <span class="pill">{{STATUS}}</span>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">
+      {{ONE_TO_THREE_SENTENCE_TLDR_OF_WHAT_IS_BEING_TRACKED_AND_WHY_IT_MATTERS}}
+      State the user impact (bug), the user need (story), or the outcome (epic).
+      Anyone who stops here should still be able to prioritise/assign/grab.
+    </p>
+    <div class="topnav">
+      <a href="#observed">1 · {{TITLE_SECTION_1}}</a>
+      <a href="#known">2 · known vs. unknown</a>
+      <a href="#model">3 · {{TITLE_SECTION_3}}</a>
+      <a href="#core">4 · {{HYPOTHESES_OR_ACCEPTANCE_OR_SCOPE}}</a>
+      <a href="#surface">5 · affected surface</a>
+      <a href="#seq">6 · {{DEPENDENCIES_OR_OMIT}}</a>
+      <a href="#risks">7 · risks</a>
+      <a href="#decide">8 · decide</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============================================================
+       §1 — What's being tracked
+       Bug: reported behavior with steps-to-repro as a pipeline,
+            optionally a Before/After toggle of "expected vs. observed".
+       Story: the user need + a tight acceptance-criteria preview.
+       Epic: the outcome statement + scope at a glance.
+       ============================================================ -->
+  <h2 id="observed">1 · {{SPECIFIC_TITLE_NOT_GENERIC}}</h2>
+  <p>{{ONE_PARAGRAPH_FRAMING}}</p>
+
+  <!-- BUG variant: Before/After toggle = expected vs. observed -->
+  <div class="arch-frame">
+    <div class="toggle-row" role="tablist">
+      <button class="active" data-pane="expected">Expected</button>
+      <button data-pane="observed">Observed</button>
+    </div>
+
+    <div class="arch-pane active" data-pane="expected">
+      <div class="pipeline">
+        <div class="step good">
+          <div class="badge">1</div>
+          <div>
+            <h4>{{EXPECTED_STEP_TITLE}}</h4>
+            <div class="desc">{{WHAT_SHOULD_HAPPEN}}</div>
+          </div>
+        </div>
+        <!-- more steps as needed -->
+      </div>
+    </div>
+
+    <div class="arch-pane" data-pane="observed">
+      <div class="pipeline">
+        <div class="step danger">
+          <div class="badge">1</div>
+          <div>
+            <h4><span class="tag danger">{{FAILURE_MODE}}</span>&nbsp; {{OBSERVED_STEP_TITLE}}</h4>
+            <div class="desc">{{WHAT_ACTUALLY_HAPPENS_INCLUDING_ERROR_TEXT}}</div>
+          </div>
+        </div>
+        <!-- more steps as needed -->
+      </div>
+      <p class="small" style="margin-top:14px"><strong>Repro:</strong> {{MINIMAL_REPRO_OR_TRIGGER_CONDITIONS}}.</p>
+    </div>
+  </div>
+
+  <!-- STORY/EPIC variant alternative: replace the toggle with a plain
+       pipeline of the proposed user flow / scope breakdown, or a short
+       narrative paragraph. Delete the toggle block above and use this. -->
+  <!--
+  <div class="pipeline">
+    <div class="step">
+      <div class="badge">1</div>
+      <div>
+        <h4>{{FLOW_OR_SCOPE_STEP}}</h4>
+        <div class="desc">{{DESCRIPTION}}</div>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <!-- ============================================================
+       §2 — What we know vs. what we don't
+       Triage's most useful single artefact. Forces structured
+       thinking about evidence vs. assumptions.
+       ============================================================ -->
+  <h2 id="known">2 · What we know vs. what we don't</h2>
+  <div class="two-col">
+    <div class="col known">
+      <h3>Known</h3>
+      <ul>
+        <li>{{FACT_FROM_THE_REPORT_OR_CODE}}</li>
+        <li>{{FACT}}</li>
+      </ul>
+    </div>
+    <div class="col unknown">
+      <h3>Unknown</h3>
+      <ul>
+        <li>{{GAP_THAT_AFFECTS_PRIORITISATION}}</li>
+        <li>{{QUESTION_WHOSE_ANSWER_CHANGES_THE_FIX}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §3 — The model
+       Bug: a sequence/state diagram of the bug's path through the
+            system, where it diverges from expected.
+       Story: a sequenceDiagram of the proposed user flow.
+       Epic: a flowchart TD with subgraphs for sub-stories.
+       ============================================================ -->
+  <h2 id="model">3 · {{SPECIFIC_TITLE_LIKE_HOW_THE_BUG_MANIFESTS}}</h2>
+  <p>{{ONE_SENTENCE_FRAMING}}</p>
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant A as {{COMPONENT}}
+  participant B as {{COMPONENT}}
+  U->>A: {{ACTION}}
+  A->>B: {{CALL}}
+  B-->>A: {{RESPONSE_WHERE_THINGS_GO_WRONG}}
+  </div>
+  <p class="small">{{ANNOTATION_POINTING_AT_THE_DIVERGENCE_POINT}}</p>
+
+  <!-- ============================================================
+       §4 — Hypotheses (bug) / Acceptance criteria (story) / Scope (epic)
+       Pick one shape; delete the others.
+       ============================================================ -->
+  <h2 id="core">4 · {{HYPOTHESES_OR_ACCEPTANCE_OR_SCOPE}}</h2>
+
+  <!-- BUG: ranked hypotheses with falsification tests -->
+  <details open>
+    <summary><strong>H1: {{HYPOTHESIS_1}}</strong> <span class="role">likelihood: {{HIGH_MED_LOW}}</span></summary>
+    <div class="inner">
+      <p><strong>Evidence for:</strong> {{WHAT_POINTS_AT_IT}}.</p>
+      <p><strong>Evidence against:</strong> {{WHAT_POINTS_AWAY_OR_NONE_YET}}.</p>
+      <p><strong>Falsification test:</strong> {{SPECIFIC_THING_TO_CHECK_OR_RUN}}.</p>
+    </div>
+  </details>
+  <details>
+    <summary><strong>H2: {{HYPOTHESIS_2}}</strong> <span class="role">likelihood: {{HIGH_MED_LOW}}</span></summary>
+    <div class="inner">
+      <p><strong>Evidence for:</strong> {{...}}.</p>
+      <p><strong>Falsification test:</strong> {{...}}.</p>
+    </div>
+  </details>
+
+  <!-- STORY alternative: numbered acceptance criteria as a checklist -->
+  <!--
+  <div class="checklist">
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{ACCEPTANCE_CRITERION_1}}</span>
+        <span class="why">{{HOW_TO_VERIFY_THIS_HOLDS}}</span>
+      </span>
+    </label>
+  </div>
+  -->
+
+  <!-- EPIC alternative: scope table of sub-stories with status -->
+  <!--
+  <table>
+    <tr><th>Sub-story</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>{{LINK_OR_NAME}}</td><td><span class="pill good">done</span></td><td>{{NOTE}}</td></tr>
+    <tr><td>{{LINK_OR_NAME}}</td><td><span class="pill warn">in flight</span></td><td>{{NOTE}}</td></tr>
+    <tr><td>{{LINK_OR_NAME}}</td><td><span class="pill">not started</span></td><td>{{NOTE}}</td></tr>
+  </table>
+  -->
+
+  <!-- ============================================================
+       §5 — Affected surface
+       Code, data, users, systems impacted. Accordion grouped by area.
+       ============================================================ -->
+  <h2 id="surface">5 · Affected surface</h2>
+
+  <details open>
+    <summary><strong>{{AREA_1}}</strong> <span class="role">{{HOW_AFFECTED}}</span></summary>
+    <div class="inner">
+      <table>
+        <tr><th>Item</th><th>Impact</th></tr>
+        <tr><td><code>{{FILE_OR_COMPONENT}}</code></td><td>{{WHAT_BREAKS_OR_CHANGES}}</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary><strong>Users</strong> <span class="role">who's affected and how</span></summary>
+    <div class="inner">
+      <p>{{USER_SEGMENTS_AFFECTED_AND_FREQUENCY}}.</p>
+    </div>
+  </details>
+
+  <!-- ============================================================
+       §6 — Dependencies / sequencing (optional)
+       Use the timeline for stories/epics with ordering constraints,
+       or for bugs whose fix requires staged rollout. Delete if N/A.
+       ============================================================ -->
+  <h2 id="seq">6 · Dependencies &amp; sequencing</h2>
+  <p>{{WHY_ORDER_MATTERS_OR_DELETE_THIS_SECTION}}</p>
+  <div class="timeline">
+    <div class="tl-item">
+      <h4>{{PREREQUISITE_OR_SUBTASK}}</h4>
+      <div>{{WHAT_AND_WHY_IT_BLOCKS}}</div>
+    </div>
+    <div class="tl-item risk">
+      <h4>{{RISKY_STEP}}</h4>
+      <div>{{WHAT}}</div>
+      <div class="meta">⚠ {{CONSTRAINT_OR_BLOCKER}}</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §7 — Risks
+       For bugs: risks of NOT fixing.
+       For stories/epics: risks of scope creep, hidden dependencies,
+       wrong-shape solution.
+       ============================================================ -->
+  <h2 id="risks">7 · Risks</h2>
+  <table>
+    <tr><th>Risk</th><th>Likelihood</th><th>{{IMPACT_OR_MITIGATION}}</th></tr>
+    <tr>
+      <td><strong>{{NAMED_FAILURE_OR_MISSTEP}}.</strong> {{TRIGGER_AND_BLAST_RADIUS}}</td>
+      <td><span class="pill warn">medium</span></td>
+      <td>{{WHAT_HAPPENS_OR_HOW_TO_HEDGE}}</td>
+    </tr>
+  </table>
+
+  <!-- ============================================================
+       §8 — Decide
+       For bugs: fix-now / next-sprint / need-info / wontfix.
+       For stories: grab / refine more / estimate-and-shelve.
+       For epics: commit / re-scope / defer.
+       ============================================================ -->
+  <h2 id="decide">8 · Decision checklist</h2>
+  <p>Questions to walk through before {{ACTION_VERB}}:</p>
+  <div class="checklist">
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_1}}</span>
+        <span class="why">{{WHY_THIS_MATTERS_INCLUDING_STAKES}}</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_2}}</span>
+        <span class="why">{{WHY}}</span>
+      </span>
+    </label>
+  </div>
+
+  <p class="small" style="margin-top:24px">
+    Generated for {{ISSUE_REF_WITH_LINK}} on a session focused on {{SESSION_CONTEXT}}.
+  </p>
+
+</main>
+
+<script>
+  document.querySelectorAll(".toggle-row").forEach(group => {
+    group.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const frame = group.closest(".arch-frame");
+      frame.querySelectorAll(".toggle-row button").forEach(b => b.classList.toggle("active", b === btn));
+      const target = btn.dataset.pane;
+      frame.querySelectorAll(".arch-pane").forEach(p => p.classList.toggle("active", p.dataset.pane === target));
+    });
+  });
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      darkMode: true,
+      background: "#161b22",
+      primaryColor: "#1c2230",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#2a313c",
+      lineColor: "#58a6ff",
+      secondaryColor: "#1c2230",
+      tertiaryColor: "#0e1116",
+      noteBkgColor: "#1c2230",
+      noteTextColor: "#e6edf3",
+      noteBorderColor: "#2a313c",
+      actorBkg: "#1c2230",
+      actorBorder: "#2a313c",
+      actorTextColor: "#e6edf3",
+      activationBkgColor: "#58a6ff",
+      sequenceNumberColor: "#0e1116"
+    }
+  });
+</script>
+
+</body>
+</html>

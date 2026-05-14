@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{TITLE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  /* IDENTICAL across all four explainer templates.
+     If you change the palette / components here, change it in
+     TEMPLATE-pr.html, TEMPLATE-issue.html, TEMPLATE-research.html too. */
+  :root {
+    --bg: #0e1116;
+    --bg-elev: #161b22;
+    --bg-elev-2: #1c2230;
+    --border: #2a313c;
+    --fg: #e6edf3;
+    --fg-muted: #8b96a4;
+    --accent: #58a6ff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --diff-add: rgba(63, 185, 80, 0.12);
+    --diff-del: rgba(248, 81, 73, 0.12);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 0 0 80px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+    background: linear-gradient(180deg, #1c2230 0%, transparent 100%);
+  }
+  header.hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header.hero .lede { font-size: 16px; color: var(--fg-muted); margin: 0 0 16px; max-width: 800px; }
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 12px;
+    font-family: var(--mono); margin-right: 6px;
+  }
+  .pill a { color: var(--accent); text-decoration: none; }
+  .pill.good { color: var(--good); border-color: rgba(63, 185, 80, 0.4); }
+  .pill.warn { color: var(--warn); border-color: rgba(210, 153, 34, 0.4); }
+  .pill.bad  { color: var(--bad);  border-color: rgba(248, 81, 73, 0.4); }
+  h2 {
+    font-size: 22px; margin: 48px 0 16px; letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0 12px; }
+  code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-elev); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 16px; border-radius: 6px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+  }
+  pre.diff .add { background: var(--diff-add); display: block; }
+  pre.diff .del { background: var(--diff-del); display: block; }
+  .toggle-row {
+    display: inline-flex; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin: 8px 0 16px;
+  }
+  .toggle-row button {
+    background: transparent; color: var(--fg-muted); border: 0;
+    padding: 8px 16px; font: inherit; cursor: pointer; font-weight: 500;
+  }
+  .toggle-row button.active { background: var(--accent); color: #0e1116; }
+  .arch-frame { position: relative; }
+  .arch-pane { display: none; }
+  .arch-pane.active { display: block; }
+  .pipeline { display: grid; gap: 14px; }
+  .step {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+  .step .badge {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-weight: 600;
+    color: var(--accent);
+  }
+  .step h4 { margin: 0 0 4px; font-size: 14px; }
+  .step .desc { color: var(--fg-muted); font-size: 13px; }
+  .step.danger { border-color: rgba(248, 81, 73, 0.5); background: rgba(248,81,73,0.06); }
+  .step.danger .badge { color: var(--bad); border-color: rgba(248, 81, 73, 0.5); }
+  .step.good { border-color: rgba(63, 185, 80, 0.5); background: rgba(63,185,80,0.06); }
+  .step.good .badge { color: var(--good); border-color: rgba(63, 185, 80, 0.5); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+  }
+  .tag.danger { background: rgba(248, 81, 73, 0.15); color: var(--bad); border: 1px solid rgba(248,81,73,0.3); }
+  .tag.good   { background: rgba(63, 185, 80, 0.15); color: var(--good); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .tag.warn   { background: rgba(210, 153, 34, 0.15); color: var(--warn); border: 1px solid rgba(210, 153, 34, 0.3); }
+  .tag.neutral{ background: var(--bg-elev-2); color: var(--fg-muted); border: 1px solid var(--border); }
+  details {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; margin: 8px 0; padding: 0;
+  }
+  details > summary {
+    cursor: pointer; padding: 12px 16px; user-select: none;
+    font-weight: 500; display: flex; align-items: center; gap: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▶"; font-size: 9px; color: var(--fg-muted);
+    transition: transform 0.15s; display: inline-block;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details .inner { padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  details .role { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
+  .checklist label {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; margin: 6px 0; cursor: pointer;
+  }
+  .checklist input[type=checkbox] { margin-top: 2px; accent-color: var(--accent); }
+  .checklist .q { font-weight: 500; }
+  .checklist .why { color: var(--fg-muted); font-size: 13px; margin-top: 4px; display: block; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  th { color: var(--fg-muted); font-weight: 500; }
+  td code { font-size: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col h3 { margin-top: 0; }
+  .two-col .col {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .two-col .col.good { border-left: 3px solid var(--good); }
+  .two-col .col.bad  { border-left: 3px solid var(--bad); }
+  .mermaid {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center;
+  }
+  a { color: var(--accent); }
+  .small { font-size: 13px; color: var(--fg-muted); }
+  .topnav { font-family: var(--mono); font-size: 13px; }
+  .topnav a { color: var(--fg-muted); text-decoration: none; margin-right: 14px; }
+  .topnav a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     CONCEPT / FRAMEWORK / ADR explainer
+     Spine: why this matters → prerequisites → mental model →
+            worked example → counterexamples → when to use →
+            risks of misuse → decide
+     For ADRs specifically: see REFERENCE.md for tweaks
+     (alternatives flowchart, consequences, revisit triggers).
+     ============================================================ -->
+
+<header class="hero">
+  <div class="container">
+    <span class="pill"><a href="{{SOURCE_URL}}" target="_blank">{{SOURCE_REF}}</a></span>
+    <span class="pill">{{TYPE_LIKE_CONCEPT_OR_FRAMEWORK_OR_ADR}}</span>
+    <span class="pill">{{AREA_OR_DOMAIN}}</span>
+    <span class="pill">{{DATE_OR_VERSION}}</span>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">
+      {{ONE_TO_THREE_SENTENCE_TLDR}}
+      What this concept is, why it's worth your attention, and the
+      headline tradeoff if you adopt it. A reader who stops here should
+      still know whether to read on.
+    </p>
+    <div class="topnav">
+      <a href="#why">1 · why this matters</a>
+      <a href="#prereq">2 · prerequisites</a>
+      <a href="#model">3 · mental model</a>
+      <a href="#example">4 · worked example</a>
+      <a href="#not">5 · what it's NOT</a>
+      <a href="#fit">6 · when to use</a>
+      <a href="#risks">7 · risks of misuse</a>
+      <a href="#decide">8 · decide</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============================================================
+       §1 — Why this matters
+       The motivating problem. What's broken / missing / clunky
+       without this concept. Anchors the reader's intuition.
+       ============================================================ -->
+  <h2 id="why">1 · {{SPECIFIC_TITLE_LIKE_THE_PROBLEM_THIS_SOLVES}}</h2>
+  <p>{{THE_MOTIVATING_GAP_OR_FRICTION}}</p>
+  <p>{{WHAT_PEOPLE_DO_TODAY_WITHOUT_THIS_AND_WHY_IT_HURTS}}</p>
+
+  <!-- ============================================================
+       §2 — Prerequisites
+       What the reader should already know. Be specific — don't say
+       "familiarity with X"; say which 3 concepts from X.
+       ============================================================ -->
+  <h2 id="prereq">2 · Prerequisites</h2>
+  <ul>
+    <li><strong>{{CONCEPT_OR_TERM}}</strong> — {{ONE_LINE_REMINDER_OR_LINK}}.</li>
+    <li><strong>{{CONCEPT_OR_TERM}}</strong> — {{ONE_LINE_REMINDER_OR_LINK}}.</li>
+  </ul>
+  <p class="small">If any of these feel shaky, skim the linked refresher first — the rest of this doc assumes them.</p>
+
+  <!-- ============================================================
+       §3 — The mental model
+       The diagram. State diagrams, hierarchies, classDiagram, and
+       flowchart TD with subgraphs work well here.
+       Follow with a `<p class="small">` that names the parts so the
+       reader knows what to look for in the diagram.
+       ============================================================ -->
+  <h2 id="model">3 · The mental model</h2>
+  <p>{{ONE_SENTENCE_FRAMING_OF_THE_MODEL}}</p>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> {{STATE_1}}
+  {{STATE_1}} --> {{STATE_2}}: {{TRANSITION_LABEL}}
+  {{STATE_2}} --> [*]
+  </div>
+  <p class="small">{{ANNOTATION_NAMING_THE_KEY_PARTS_AND_INVARIANTS}}</p>
+
+  <!-- ============================================================
+       §4 — Worked example
+       Concrete, runnable, BEFORE any abstract definition. The
+       reader's first encounter with the concept should be a real
+       instance, not a definition.
+       ============================================================ -->
+  <h2 id="example">4 · Worked example</h2>
+  <p>{{REAL_CONCRETE_SCENARIO_NOT_FOO_BAR}}</p>
+  <pre><code>{{CODE_OR_CONFIG_OR_PSEUDO_THAT_DEMONSTRATES_THE_CONCEPT}}</code></pre>
+  <p>{{WALK_THROUGH_OF_WHAT_THE_EXAMPLE_DOES_LINE_BY_LINE_OR_STAGE_BY_STAGE}}</p>
+
+  <h3>What changed in your thinking</h3>
+  <p>{{THE_AHA_MOMENT_THE_EXAMPLE_SHOULD_PRODUCE}}.</p>
+
+  <!-- ============================================================
+       §5 — What it's NOT (counterexamples)
+       Where this concept gets confused with neighbouring concepts,
+       and the actual difference. Most under-served section in
+       concept docs in the wild.
+       ============================================================ -->
+  <h2 id="not">5 · What {{CONCEPT}} is NOT</h2>
+  <p>Distinguishing it from neighbouring ideas readers often confuse it with:</p>
+
+  <details open>
+    <summary><strong>Not {{NEIGHBOURING_CONCEPT_1}}</strong> <span class="role">common conflation</span></summary>
+    <div class="inner">
+      <p><strong>The conflation:</strong> {{WHY_PEOPLE_MIX_THEM_UP}}.</p>
+      <p><strong>The difference:</strong> {{THE_ACTUAL_DELTA_NOT_HAND_WAVING}}.</p>
+      <p><strong>How to tell:</strong> {{A_SPECIFIC_TEST_OR_QUESTION_THAT_DISCRIMINATES}}.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><strong>Not {{NEIGHBOURING_CONCEPT_2}}</strong> <span class="role">common conflation</span></summary>
+    <div class="inner">
+      <p><strong>The conflation:</strong> {{...}}.</p>
+      <p><strong>The difference:</strong> {{...}}.</p>
+    </div>
+  </details>
+
+  <!-- ============================================================
+       §6 — When to use / when not to
+       Two-col is the right shape here. Be concrete — "use when
+       you have N+ services" beats "use when complexity is high".
+       ============================================================ -->
+  <h2 id="fit">6 · When to use, when not to</h2>
+  <div class="two-col">
+    <div class="col good">
+      <h3>Reach for {{CONCEPT}} when…</h3>
+      <ul>
+        <li>{{SPECIFIC_SITUATION_WHERE_IT_PAYS_OFF}}</li>
+        <li>{{SPECIFIC_SITUATION}}</li>
+      </ul>
+    </div>
+    <div class="col bad">
+      <h3>Don't reach for it when…</h3>
+      <ul>
+        <li>{{SITUATION_WHERE_IT_S_OVERKILL_OR_WRONG_FIT}}</li>
+        <li>{{SITUATION_WHERE_A_NEIGHBOURING_TOOL_FITS_BETTER_AND_WHAT_THAT_IS}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §7 — Risks of misuse
+       Specific failure modes, not "could be misused". Name the
+       anti-pattern, what triggers it, what it costs.
+       ============================================================ -->
+  <h2 id="risks">7 · Risks of misuse</h2>
+  <table>
+    <tr><th>Anti-pattern</th><th>What triggers it</th><th>Cost</th></tr>
+    <tr>
+      <td><strong>{{NAMED_ANTIPATTERN_1}}</strong></td>
+      <td>{{WHO_FALLS_INTO_IT_AND_HOW}}</td>
+      <td>{{SPECIFIC_BAD_OUTCOME}}</td>
+    </tr>
+    <tr>
+      <td><strong>{{NAMED_ANTIPATTERN_2}}</strong></td>
+      <td>{{...}}</td>
+      <td>{{...}}</td>
+    </tr>
+  </table>
+
+  <!-- ============================================================
+       §8 — Decide
+       For concepts: adopt / learn deeper / skip / cite.
+       For ADRs: agree / revisit / extend.
+       Each checkbox has a "why this matters" that names what
+       you're committing to (or closing off) by ticking it.
+       ============================================================ -->
+  <h2 id="decide">8 · Decision checklist</h2>
+  <p>Questions to walk through before {{ACTION_VERB_LIKE_ADOPTING_OR_AGREEING}}:</p>
+  <div class="checklist">
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">Does my current situation match the "reach for it when" column above?</span>
+        <span class="why">If it doesn't, adoption will feel forced and the team will work around it. Better to wait for a real fit.</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_SPECIFIC_TO_THIS_CONCEPT}}</span>
+        <span class="why">{{WHY_AND_WHAT_GOES_WRONG_IF_NO}}</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">What would change my mind about this concept being a good fit?</span>
+        <span class="why">Write down the conditions now — when they appear later you'll know to revisit, instead of staying committed by inertia.</span>
+      </span>
+    </label>
+  </div>
+
+  <p class="small" style="margin-top:24px">
+    Generated from {{SOURCE_REF_WITH_LINK}} on a session focused on {{SESSION_CONTEXT}}.
+  </p>
+
+</main>
+
+<script>
+  document.querySelectorAll(".toggle-row").forEach(group => {
+    group.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const frame = group.closest(".arch-frame");
+      frame.querySelectorAll(".toggle-row button").forEach(b => b.classList.toggle("active", b === btn));
+      const target = btn.dataset.pane;
+      frame.querySelectorAll(".arch-pane").forEach(p => p.classList.toggle("active", p.dataset.pane === target));
+    });
+  });
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      darkMode: true,
+      background: "#161b22",
+      primaryColor: "#1c2230",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#2a313c",
+      lineColor: "#58a6ff",
+      secondaryColor: "#1c2230",
+      tertiaryColor: "#0e1116",
+      noteBkgColor: "#1c2230",
+      noteTextColor: "#e6edf3",
+      noteBorderColor: "#2a313c",
+      actorBkg: "#1c2230",
+      actorBorder: "#2a313c",
+      actorTextColor: "#e6edf3",
+      activationBkgColor: "#58a6ff",
+      sequenceNumberColor: "#0e1116"
+    }
+  });
+</script>
+
+</body>
+</html>

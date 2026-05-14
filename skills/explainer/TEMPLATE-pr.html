@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{TITLE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0e1116;
+    --bg-elev: #161b22;
+    --bg-elev-2: #1c2230;
+    --border: #2a313c;
+    --fg: #e6edf3;
+    --fg-muted: #8b96a4;
+    --accent: #58a6ff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --diff-add: rgba(63, 185, 80, 0.12);
+    --diff-del: rgba(248, 81, 73, 0.12);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+    padding: 0 0 80px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+    background: linear-gradient(180deg, #1c2230 0%, transparent 100%);
+  }
+  header.hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header.hero .lede { font-size: 16px; color: var(--fg-muted); margin: 0 0 16px; max-width: 800px; }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 12px;
+    font-family: var(--mono); margin-right: 6px;
+  }
+  .pill a { color: var(--accent); text-decoration: none; }
+  .pill.good { color: var(--good); border-color: rgba(63, 185, 80, 0.4); }
+  .pill.warn { color: var(--warn); border-color: rgba(210, 153, 34, 0.4); }
+  .pill.bad  { color: var(--bad); border-color: rgba(248, 81, 73, 0.4); }
+
+  h2 {
+    font-size: 22px; margin: 48px 0 16px; letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0 12px; }
+
+  code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-elev); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 16px; border-radius: 6px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+  }
+  /* Selective diff snippet — wrap added/removed lines in spans */
+  pre.diff .add { background: var(--diff-add); display: block; }
+  pre.diff .del { background: var(--diff-del); display: block; }
+
+  /* before/after toggle */
+  .toggle-row {
+    display: inline-flex; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin: 8px 0 16px;
+  }
+  .toggle-row button {
+    background: transparent; color: var(--fg-muted); border: 0;
+    padding: 8px 16px; font: inherit; cursor: pointer; font-weight: 500;
+  }
+  .toggle-row button.active { background: var(--accent); color: #0e1116; }
+  .arch-frame { position: relative; }
+  .arch-pane { display: none; }
+  .arch-pane.active { display: block; }
+
+  /* pipeline / step cards */
+  .pipeline { display: grid; gap: 14px; }
+  .step {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+  .step .badge {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-weight: 600;
+    color: var(--accent);
+  }
+  .step h4 { margin: 0 0 4px; font-size: 14px; }
+  .step .desc { color: var(--fg-muted); font-size: 13px; }
+  .step.danger { border-color: rgba(248, 81, 73, 0.5); background: rgba(248,81,73,0.06); }
+  .step.danger .badge { color: var(--bad); border-color: rgba(248, 81, 73, 0.5); }
+  .step.good { border-color: rgba(63, 185, 80, 0.5); background: rgba(63,185,80,0.06); }
+  .step.good .badge { color: var(--good); border-color: rgba(63, 185, 80, 0.5); }
+
+  /* inline qualifier tags (long-lived / short-lived / deprecated / etc.) */
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+  }
+  .tag.danger { background: rgba(248, 81, 73, 0.15); color: var(--bad); border: 1px solid rgba(248,81,73,0.3); }
+  .tag.good   { background: rgba(63, 185, 80, 0.15); color: var(--good); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .tag.warn   { background: rgba(210, 153, 34, 0.15); color: var(--warn); border: 1px solid rgba(210, 153, 34, 0.3); }
+  .tag.neutral{ background: var(--bg-elev-2); color: var(--fg-muted); border: 1px solid var(--border); }
+
+  /* accordion for file-by-file or sub-topic detail */
+  details {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; margin: 8px 0; padding: 0;
+  }
+  details > summary {
+    cursor: pointer; padding: 12px 16px; user-select: none;
+    font-weight: 500; display: flex; align-items: center; gap: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▶"; font-size: 9px; color: var(--fg-muted);
+    transition: transform 0.15s; display: inline-block;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details .inner { padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  details .role { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
+
+  /* timeline with actor badges */
+  .timeline { display: grid; gap: 12px; counter-reset: step; }
+  .tl-item {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px 14px 56px; position: relative;
+  }
+  .tl-item::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: 14px; top: 14px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    color: var(--accent); font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tl-item h4 { margin: 0 0 4px; font-size: 14px; }
+  .tl-item .meta { color: var(--fg-muted); font-size: 12px; margin-top: 6px; }
+  .tl-item.risk { border-left: 3px solid var(--warn); }
+  .tl-item.risk .meta { color: var(--warn); }
+  /* actor badge: set data-actor on the .tl-item and class actor-<role> */
+  .tl-item[data-actor]::after {
+    content: attr(data-actor);
+    position: absolute; top: 14px; right: 14px;
+    font-family: var(--mono); font-size: 11px;
+    padding: 2px 8px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .tl-item.actor-op[data-actor]::after  { color: var(--warn);  background: rgba(210,153,34,0.1); border-color: rgba(210,153,34,0.3); }
+  .tl-item.actor-ci[data-actor]::after  { color: var(--accent);background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3); }
+  .tl-item.actor-bot[data-actor]::after { color: var(--good);  background: rgba(63,185,80,0.1);  border-color: rgba(63,185,80,0.3); }
+
+  /* decision checklist */
+  .checklist label {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; margin: 6px 0; cursor: pointer;
+  }
+  .checklist input[type=checkbox] { margin-top: 2px; accent-color: var(--accent); }
+  .checklist .q { font-weight: 500; }
+  .checklist .why { color: var(--fg-muted); font-size: 13px; margin-top: 4px; display: block; }
+
+  /* tables */
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  th { color: var(--fg-muted); font-weight: 500; }
+  td code { font-size: 12px; }
+
+  /* two-column comparison */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col h3 { margin-top: 0; }
+  .two-col .col {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .two-col .col.before { border-left: 3px solid var(--bad); }
+  .two-col .col.after  { border-left: 3px solid var(--good); }
+
+  .mermaid {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center;
+  }
+
+  a { color: var(--accent); }
+  .small { font-size: 13px; color: var(--fg-muted); }
+
+  .topnav { font-family: var(--mono); font-size: 13px; }
+  .topnav a { color: var(--fg-muted); text-decoration: none; margin-right: 14px; }
+  .topnav a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HERO — pills, title, lede (this is the TL;DR), topnav
+     ============================================================ -->
+<header class="hero">
+  <div class="container">
+    <span class="pill"><a href="{{SOURCE_URL}}" target="_blank">{{SOURCE_REF}}</a></span>
+    <!-- For PRs: closes-issue + scope pill. For concepts: source/date pills. -->
+    <span class="pill">{{CLOSES_OR_CITES}}</span>
+    <span class="pill good">{{SCOPE_OR_FRESHNESS}}</span>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">
+      {{ONE_TO_THREE_SENTENCES_THAT_ARE_THE_TLDR}}
+      State the thing being changed, the why, and the headline tradeoff.
+      Anyone who stops reading here should still be able to act.
+    </p>
+    <div class="topnav">
+      <a href="#current">1 · {{TITLE_OF_SECTION_1}}</a>
+      <a href="#new">2 · {{TITLE_OF_SECTION_2}}</a>
+      <a href="#mechanics">3 · {{TITLE_OF_SECTION_3}}</a>
+      <a href="#changes">4 · {{TITLE_OF_SECTION_4}}</a>
+      <a href="#tradeoffs">5 · {{TITLE_OF_SECTION_5}}</a>
+      <a href="#rollout">6 · {{ROLLOUT_OR_OMIT}}</a>
+      <a href="#risks">7 · risks</a>
+      <a href="#decide">8 · decide</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============================================================
+       §1 — The current shape / problem
+       Title with what it SAYS, not what kind of section it is.
+       e.g. "The shortcut we're removing", not "Background".
+       ============================================================ -->
+  <h2 id="current">1 · {{SPECIFIC_TITLE_NOT_BACKGROUND}}</h2>
+  <p>{{WHAT_EXISTS_TODAY_AND_WHY_IT_MATTERS}}</p>
+
+  <!-- The Before/After toggle: same pipeline shown two ways.
+       Canonical pattern for any PR/refactor/migration. -->
+  <div class="arch-frame">
+    <div class="toggle-row" role="tablist">
+      <button class="active" data-pane="before">Before (today)</button>
+      <button data-pane="after">After (this change)</button>
+    </div>
+
+    <div class="arch-pane active" data-pane="before">
+      <div class="pipeline">
+        <div class="step danger">
+          <div class="badge">1</div>
+          <div>
+            <h4><span class="tag danger">{{QUALIFIER}}</span>&nbsp; {{STEP_TITLE}}</h4>
+            <div class="desc">{{ONE_OR_TWO_SENTENCE_DESCRIPTION}}</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="badge">2</div>
+          <div>
+            <h4>{{STEP_TITLE}}</h4>
+            <div class="desc">{{DESCRIPTION}}</div>
+          </div>
+        </div>
+        <!-- More steps as needed -->
+      </div>
+      <p class="small" style="margin-top:14px">
+        <strong>What's bounded today:</strong> {{EXISTING_MITIGATIONS}}.
+        <strong>What's not:</strong> {{THE_PROBLEM_THIS_PR_ADDRESSES}}.
+      </p>
+    </div>
+
+    <div class="arch-pane" data-pane="after">
+      <div class="pipeline">
+        <div class="step good">
+          <div class="badge">1</div>
+          <div>
+            <h4><span class="tag good">{{QUALIFIER}}</span>&nbsp; {{STEP_TITLE}}</h4>
+            <div class="desc">{{DESCRIPTION}}</div>
+          </div>
+        </div>
+        <!-- More steps as needed -->
+      </div>
+      <p class="small" style="margin-top:14px">
+        <strong>What's structurally different:</strong> {{KEY_PROPERTY_THAT_CHANGED}}.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §2 — The new shape, conceptually
+       Two-column comparison of the conceptual delta, NOT the
+       implementation. e.g. "trust anchor before vs. after".
+       ============================================================ -->
+  <h2 id="new">2 · {{SPECIFIC_TITLE}}</h2>
+  <div class="two-col">
+    <div class="col before">
+      <h3>Before: {{DIMENSION}}</h3>
+      <p>{{CONCEPTUAL_DESCRIPTION_OF_THE_OLD_SHAPE}}</p>
+    </div>
+    <div class="col after">
+      <h3>After: {{DIMENSION}}</h3>
+      <p>{{CONCEPTUAL_DESCRIPTION_OF_THE_NEW_SHAPE}}</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §3 — Mechanics
+       How does the new shape actually work? Usually a sequence
+       diagram. Use a small `<p class="small">` after the diagram
+       to head off the most likely misreading.
+       ============================================================ -->
+  <h2 id="mechanics">3 · {{SPECIFIC_TITLE_LIKE_TOKEN_EXCHANGE}}</h2>
+  <p>{{ONE_SENTENCE_FRAMING}}</p>
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant A as {{ACTOR_1}}
+  participant B as {{ACTOR_2}}
+  A->>B: {{LABEL_WITH_CRITICAL_DETAIL}}
+  B-->>A: {{LABEL}}
+  </div>
+  <p class="small">{{FOOTNOTE_HEADING_OFF_THE_MOST_LIKELY_MISREADING}}</p>
+
+  <!-- ============================================================
+       §4 — File-by-file (PR) OR sub-topics (concept)
+       For PRs: group by CONCERN, not by file. Use accordions.
+       Selective diff snippets only — embed a hunk ONLY if its
+       shape carries the explanation.
+       ============================================================ -->
+  <h2 id="changes">4 · {{SPECIFIC_TITLE}}</h2>
+  <p>{{N}} files. Grouped by concern.</p>
+
+  <details open>
+    <summary><strong>{{GROUP_NAME}}</strong> <span class="role">{{ROLE_OF_THIS_GROUP}}</span></summary>
+    <div class="inner">
+      <!-- Use a resource table for groups with many files where the diff doesn't teach -->
+      <table>
+        <tr><th>Resource</th><th>Change</th></tr>
+        <tr><td><code>{{NAME}}</code></td><td><span class="pill good">new</span> {{WHAT_AND_WHY}}</td></tr>
+        <tr><td><code>{{NAME}}</code></td><td><span class="pill bad">deleted</span> {{WHAT_AND_WHY}}</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary><strong>{{GROUP_NAME}}</strong> <span class="role">{{ROLE}}</span></summary>
+    <div class="inner">
+      <!-- Selective diff: include ONLY when the hunk's shape teaches.
+           Wrap added/removed lines in <span class="add">/<span class="del">. -->
+      <pre class="diff"><code><span class="del">- {{OLD_LINE}}</span><span class="add">+ {{NEW_LINE}}</span></code></pre>
+      <p class="small">{{WHY_THIS_HUNK_MATTERS}}</p>
+    </div>
+  </details>
+
+  <!-- ============================================================
+       §5 — Tradeoffs / "why this specific choice"
+       Surface version-pin reasoning, considered-and-rejected
+       alternatives, locked-in decisions.
+       ============================================================ -->
+  <h2 id="tradeoffs">5 · {{SPECIFIC_TITLE_LIKE_WHY_VERSION_X}}</h2>
+  <p>{{FRAMING}}</p>
+
+  <table>
+    <tr><th>Option</th><th>{{DIMENSION_1}}</th><th>{{DIMENSION_2}}</th><th>{{DIMENSION_3}}</th></tr>
+    <tr><td><code>{{OPTION_A}}</code></td><td>{{VAL}}</td><td><span class="pill bad">no</span></td><td><span class="pill good">yes</span></td></tr>
+    <tr><td><code>{{OPTION_B}}</code></td><td>{{VAL}}</td><td><span class="pill good">yes</span></td><td><span class="pill bad">no</span></td></tr>
+  </table>
+
+  <h3>Why {{CHOSEN_OPTION}} specifically?</h3>
+  <ul>
+    <li><strong>{{REASON_1}}</strong> — {{ELABORATION}}.</li>
+    <li><strong>{{REASON_2}}</strong> — {{ELABORATION}}.</li>
+  </ul>
+
+  <!-- ============================================================
+       §6 — Rollout (PR / issue variants only — omit for concepts)
+       Timeline component. Mark actor on each step.
+       Mark steps that have hard cutovers with class="risk".
+       ============================================================ -->
+  <h2 id="rollout">6 · {{ROLLOUT_OR_NEXT_STEPS}}</h2>
+  <p>{{FRAMING_INCLUDING_WHY_ORDER_MATTERS}}</p>
+
+  <div class="timeline">
+    <div class="tl-item actor-op" data-actor="operator">
+      <h4>{{STEP_TITLE}}</h4>
+      <div>{{WHAT_THIS_STEP_DOES}}</div>
+    </div>
+    <div class="tl-item actor-ci" data-actor="CI">
+      <h4>{{STEP_TITLE}}</h4>
+      <div>{{WHAT_HAPPENS}}</div>
+      <div class="meta">{{IMPORTANT_NOTE_OR_SIDE_EFFECT}}</div>
+    </div>
+    <div class="tl-item actor-op risk" data-actor="operator">
+      <h4>{{HARD_CUTOVER_STEP}}</h4>
+      <div>{{WHAT}}</div>
+      <pre style="margin-top:8px"><code>{{COMMAND}}</code></pre>
+      <div class="meta">⚠ {{WHY_THIS_IS_A_HARD_CUT_AND_BLAST_RADIUS}}</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §7 — Risks
+       Risk table. Each row: failure mode (not "could have bugs"),
+       likelihood, mitigation. Be specific.
+       ============================================================ -->
+  <h2 id="risks">7 · Risks &amp; what could go wrong</h2>
+  <table>
+    <tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr>
+    <tr>
+      <td><strong>{{NAMED_FAILURE_MODE}}.</strong> {{TRIGGER_AND_BLAST_RADIUS}}</td>
+      <td><span class="pill warn">medium</span></td>
+      <td>{{HOW_TO_DETECT_AND_RECOVER}}</td>
+    </tr>
+    <tr>
+      <td><strong>{{NAMED_FAILURE_MODE}}.</strong> {{DETAIL}}</td>
+      <td><span class="pill good">low</span></td>
+      <td>{{MITIGATION}}</td>
+    </tr>
+  </table>
+
+  <!-- ============================================================
+       §8 — Decision checklist
+       Interactive checkboxes. Each is a real question the reader
+       should answer before acting, with a "why this matters"
+       subtitle explaining the stakes.
+       Replaces the generic "open questions" list.
+       ============================================================ -->
+  <h2 id="decide">8 · Decision checklist</h2>
+  <p>Questions to walk through before {{ACTION_VERB_LIKE_MERGING}}:</p>
+  <div class="checklist">
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_1}}</span>
+        <span class="why">{{WHY_THIS_MATTERS_INCLUDING_THE_STAKES}}</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_2}}</span>
+        <span class="why">{{WHY}}</span>
+      </span>
+    </label>
+  </div>
+
+  <!-- Footer: provenance line tying this doc to its source -->
+  <p class="small" style="margin-top:24px">
+    Generated for {{SOURCE_REF_WITH_LINK}} on a session focused on {{SESSION_CONTEXT}}.
+  </p>
+
+</main>
+
+<script>
+  // before/after toggle
+  document.querySelectorAll(".toggle-row").forEach(group => {
+    group.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const frame = group.closest(".arch-frame");
+      frame.querySelectorAll(".toggle-row button").forEach(b => b.classList.toggle("active", b === btn));
+      const target = btn.dataset.pane;
+      frame.querySelectorAll(".arch-pane").forEach(p => p.classList.toggle("active", p.dataset.pane === target));
+    });
+  });
+
+  // mermaid (dark theme)
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      darkMode: true,
+      background: "#161b22",
+      primaryColor: "#1c2230",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#2a313c",
+      lineColor: "#58a6ff",
+      secondaryColor: "#1c2230",
+      tertiaryColor: "#0e1116",
+      noteBkgColor: "#1c2230",
+      noteTextColor: "#e6edf3",
+      noteBorderColor: "#2a313c",
+      actorBkg: "#1c2230",
+      actorBorder: "#2a313c",
+      actorTextColor: "#e6edf3",
+      activationBkgColor: "#58a6ff",
+      sequenceNumberColor: "#0e1116"
+    }
+  });
+</script>
+
+</body>
+</html>

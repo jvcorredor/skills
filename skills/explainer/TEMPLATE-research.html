@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{TITLE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  /* IDENTICAL across all four explainer templates.
+     If you change the palette / components here, change it in
+     TEMPLATE-pr.html, TEMPLATE-issue.html, TEMPLATE-concept.html too. */
+  :root {
+    --bg: #0e1116;
+    --bg-elev: #161b22;
+    --bg-elev-2: #1c2230;
+    --border: #2a313c;
+    --fg: #e6edf3;
+    --fg-muted: #8b96a4;
+    --accent: #58a6ff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --diff-add: rgba(63, 185, 80, 0.12);
+    --diff-del: rgba(248, 81, 73, 0.12);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 0 0 80px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 0 32px;
+    background: linear-gradient(180deg, #1c2230 0%, transparent 100%);
+  }
+  header.hero h1 { font-size: 32px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header.hero .lede { font-size: 16px; color: var(--fg-muted); margin: 0 0 16px; max-width: 800px; }
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 12px;
+    font-family: var(--mono); margin-right: 6px;
+  }
+  .pill a { color: var(--accent); text-decoration: none; }
+  .pill.good { color: var(--good); border-color: rgba(63, 185, 80, 0.4); }
+  .pill.warn { color: var(--warn); border-color: rgba(210, 153, 34, 0.4); }
+  .pill.bad  { color: var(--bad);  border-color: rgba(248, 81, 73, 0.4); }
+  h2 {
+    font-size: 22px; margin: 48px 0 16px; letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0 12px; }
+  code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-elev); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 16px; border-radius: 6px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+  }
+  pre.diff .add { background: var(--diff-add); display: block; }
+  pre.diff .del { background: var(--diff-del); display: block; }
+  .pipeline { display: grid; gap: 14px; }
+  .step {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  }
+  .step .badge {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-weight: 600;
+    color: var(--accent);
+  }
+  .step h4 { margin: 0 0 4px; font-size: 14px; }
+  .step .desc { color: var(--fg-muted); font-size: 13px; }
+  .step.danger { border-color: rgba(248, 81, 73, 0.5); background: rgba(248,81,73,0.06); }
+  .step.danger .badge { color: var(--bad); border-color: rgba(248, 81, 73, 0.5); }
+  .step.good { border-color: rgba(63, 185, 80, 0.5); background: rgba(63,185,80,0.06); }
+  .step.good .badge { color: var(--good); border-color: rgba(63, 185, 80, 0.5); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+  }
+  .tag.danger { background: rgba(248, 81, 73, 0.15); color: var(--bad); border: 1px solid rgba(248,81,73,0.3); }
+  .tag.good   { background: rgba(63, 185, 80, 0.15); color: var(--good); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .tag.warn   { background: rgba(210, 153, 34, 0.15); color: var(--warn); border: 1px solid rgba(210, 153, 34, 0.3); }
+  .tag.neutral{ background: var(--bg-elev-2); color: var(--fg-muted); border: 1px solid var(--border); }
+  details {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 6px; margin: 8px 0; padding: 0;
+  }
+  details > summary {
+    cursor: pointer; padding: 12px 16px; user-select: none;
+    font-weight: 500; display: flex; align-items: center; gap: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▶"; font-size: 9px; color: var(--fg-muted);
+    transition: transform 0.15s; display: inline-block;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details .inner { padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  details .role { color: var(--fg-muted); font-size: 13px; margin-left: auto; }
+  .checklist label {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 6px; margin: 6px 0; cursor: pointer;
+  }
+  .checklist input[type=checkbox] { margin-top: 2px; accent-color: var(--accent); }
+  .checklist .q { font-weight: 500; }
+  .checklist .why { color: var(--fg-muted); font-size: 13px; margin-top: 4px; display: block; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  th { color: var(--fg-muted); font-weight: 500; }
+  td code { font-size: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col h3 { margin-top: 0; }
+  .two-col .col {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .two-col .col.acknowledged   { border-left: 3px solid var(--good); }
+  .two-col .col.unacknowledged { border-left: 3px solid var(--warn); }
+  .two-col .col.holds          { border-left: 3px solid var(--good); }
+  .two-col .col.doesnt         { border-left: 3px solid var(--bad); }
+  .mermaid {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center;
+  }
+  a { color: var(--accent); }
+  .small { font-size: 13px; color: var(--fg-muted); }
+  .topnav { font-family: var(--mono); font-size: 13px; }
+  .topnav a { color: var(--fg-muted); text-decoration: none; margin-right: 14px; }
+  .topnav a:hover { color: var(--fg); }
+  .cite {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--fg-muted); padding: 2px 6px;
+    background: var(--bg-elev-2); border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     RESEARCH / CLAIM / STUDY explainer
+     Spine: claim → methodology → evidence → limitations →
+            generalisation → risks → decide-on-trust
+     The header carries date and replication-status pills — they
+     are NOT optional. Old or unreplicated research demands a
+     different posture from the reader.
+     ============================================================ -->
+
+<header class="hero">
+  <div class="container">
+    <span class="pill"><a href="{{SOURCE_URL}}" target="_blank">{{SOURCE_REF_AUTHORS_VENUE}}</a></span>
+    <span class="pill">{{PUBLICATION_DATE}}</span>
+    <span class="pill {{REPLICATION_PILL_CLASS}}">{{REPLICATION_STATUS}}</span>
+    <span class="pill">{{FIELD_OR_DOMAIN}}</span>
+    <span class="pill {{COI_PILL_CLASS_OR_OMIT}}">{{CONFLICT_OF_INTEREST_OR_FUNDING_FLAG_OR_OMIT}}</span>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">
+      {{ONE_TO_THREE_SENTENCES_STATING_THE_HEADLINE_CLAIM_AND_THE_HEADLINE_CAVEAT}}
+      A reader who stops here should know what the paper claims and
+      the strongest reason to doubt it.
+    </p>
+    <div class="topnav">
+      <a href="#claim">1 · the claim</a>
+      <a href="#method">2 · methodology</a>
+      <a href="#evidence">3 · evidence</a>
+      <a href="#limits">4 · limitations</a>
+      <a href="#scope">5 · where this holds</a>
+      <a href="#related">6 · related &amp; updates</a>
+      <a href="#risks">7 · risks</a>
+      <a href="#decide">8 · decide</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============================================================
+       §1 — The claim
+       State it precisely. Distinguish what the paper actually
+       claims from how it's been summarised by others.
+       ============================================================ -->
+  <h2 id="claim">1 · The claim</h2>
+  <p><strong>Paper's claim, in their words:</strong> {{DIRECT_QUOTE_OR_PARAPHRASE_TIGHTLY_BOUND_TO_THE_PAPER}} <span class="cite">{{SECTION_AND_PAGE}}</span></p>
+  <p><strong>Common (mis)summarisation in the wild:</strong> {{HOW_PEOPLE_OFTEN_QUOTE_IT_AND_WHAT_THEY_DROP}}.</p>
+  <p><strong>Why the precise form matters:</strong> {{THE_DETAIL_THAT_CHANGES_HOW_TO_APPLY_IT}}.</p>
+
+  <!-- ============================================================
+       §2 — Methodology
+       Flowchart of the study design. Make the population, the
+       intervention/independent variable, the controls, the outcome
+       measure, and the analysis explicit.
+       ============================================================ -->
+  <h2 id="method">2 · Methodology</h2>
+  <p>{{ONE_SENTENCE_SUMMARY_OF_STUDY_DESIGN}}</p>
+  <div class="mermaid">
+flowchart LR
+  P[{{POPULATION}}<br/>n = {{N}}] --> S[{{SAMPLING}}]
+  S --> I[{{INTERVENTION_OR_CONDITION}}]
+  I --> M[{{MEASUREMENT}}]
+  M --> A[{{ANALYSIS}}]
+  A --> R[{{REPORTED_RESULT}}]
+  </div>
+  <p class="small">{{ANNOTATION_OF_THE_LOAD_BEARING_CHOICE_IN_THE_DESIGN}} <span class="cite">{{SECTION_AND_PAGE}}</span></p>
+
+  <h3>Key parameters</h3>
+  <table>
+    <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+    <tr><td>Population</td><td>{{POPULATION_DESCRIPTION}}</td><td>{{INCLUSION_CRITERIA_OR_BIAS}}</td></tr>
+    <tr><td>Sample size</td><td><code>n = {{N}}</code></td><td>{{POWER_OR_SUFFICIENCY_NOTE}}</td></tr>
+    <tr><td>Duration / scale</td><td>{{DURATION_OR_SCALE}}</td><td>{{COMMENT_ON_ADEQUACY}}</td></tr>
+    <tr><td>Outcome measure</td><td>{{METRIC}}</td><td>{{HOW_OPERATIONALISED}}</td></tr>
+    <tr><td>Controls</td><td>{{CONTROLS_OR_NONE}}</td><td>{{WHAT_S_NOT_CONTROLLED_FOR}}</td></tr>
+  </table>
+
+  <!-- ============================================================
+       §3 — Evidence
+       The actual numbers / data / strength of the result.
+       Surface effect size, not just statistical significance.
+       ============================================================ -->
+  <h2 id="evidence">3 · Evidence</h2>
+  <p>{{HEADLINE_NUMBER_WITH_CONFIDENCE_INTERVAL_OR_EFFECT_SIZE}}</p>
+
+  <table>
+    <tr><th>Finding</th><th>Magnitude</th><th>Confidence</th><th>Cite</th></tr>
+    <tr>
+      <td>{{FINDING_1}}</td>
+      <td>{{EFFECT_SIZE_OR_NUMBER}}</td>
+      <td>{{CI_OR_P_VALUE_OR_QUALITATIVE}}</td>
+      <td><span class="cite">{{SECTION_PAGE}}</span></td>
+    </tr>
+    <tr>
+      <td>{{FINDING_2}}</td>
+      <td>{{...}}</td>
+      <td>{{...}}</td>
+      <td><span class="cite">{{...}}</span></td>
+    </tr>
+  </table>
+
+  <p class="small"><strong>What the evidence does NOT show:</strong> {{COMMON_OVERREACH_THE_DATA_DOESN_T_SUPPORT}}.</p>
+
+  <!-- ============================================================
+       §4 — Limitations
+       Two-col: what the authors acknowledged vs. what they
+       didn't. The unacknowledged side is the real value of this
+       section — that's where readers in the wild get burned.
+       ============================================================ -->
+  <h2 id="limits">4 · Limitations</h2>
+  <div class="two-col">
+    <div class="col acknowledged">
+      <h3>Acknowledged by the authors</h3>
+      <ul>
+        <li>{{AUTHOR_ACKNOWLEDGED_LIMITATION_WITH_CITE}}</li>
+        <li>{{LIMITATION}}</li>
+      </ul>
+    </div>
+    <div class="col unacknowledged">
+      <h3>Not acknowledged (but should be)</h3>
+      <ul>
+        <li>{{LIMITATION_THE_PAPER_OMITS_AND_WHY_IT_MATTERS}}</li>
+        <li>{{LIMITATION}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §5 — Where this generalises (and where it doesn't)
+       The applicability boundary. Two-col: holds vs. doesn't.
+       Be specific — name the population/scale/era beyond which
+       the result no longer transfers.
+       ============================================================ -->
+  <h2 id="scope">5 · Where this holds (and where it doesn't)</h2>
+  <div class="two-col">
+    <div class="col holds">
+      <h3>Likely transfers to…</h3>
+      <ul>
+        <li>{{CONTEXT_LIKE_THE_STUDIED_ONE_BUT_BROADER}}</li>
+        <li>{{CONTEXT}}</li>
+      </ul>
+    </div>
+    <div class="col doesnt">
+      <h3>Probably doesn't transfer to…</h3>
+      <ul>
+        <li>{{POPULATION_OR_SCALE_OR_ERA_WHERE_KEY_ASSUMPTIONS_BREAK}}</li>
+        <li>{{CONTEXT_AND_THE_SPECIFIC_REASON_IT_BREAKS}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       §6 — Related work / what's changed since
+       Citations, replications, contradicting papers. The reader's
+       cheat sheet for "is this still load-bearing?"
+       ============================================================ -->
+  <h2 id="related">6 · Related work &amp; updates since publication</h2>
+
+  <details open>
+    <summary><strong>Replications &amp; extensions</strong> <span class="role">support or refute</span></summary>
+    <div class="inner">
+      <ul>
+        <li>{{REPLICATION_OR_EXTENSION_WITH_OUTCOME}} <span class="cite">{{CITE}}</span></li>
+        <li>{{...}}</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary><strong>Contradicting evidence</strong> <span class="role">if any</span></summary>
+    <div class="inner">
+      <ul>
+        <li>{{PAPER_OR_RESULT_THAT_PUSHES_BACK_AND_HOW}} <span class="cite">{{CITE}}</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary><strong>What I (the reader of this explainer) should track</strong> <span class="role">to keep it fresh</span></summary>
+    <div class="inner">
+      <p>{{SOURCE_OR_VENUE_OR_AUTHOR_TO_FOLLOW_FOR_UPDATES}}.</p>
+    </div>
+  </details>
+
+  <!-- ============================================================
+       §7 — Risks
+       Generalisation risk. Age risk. Conflict-of-interest risk.
+       Replication risk. Be specific about what going wrong looks
+       like for a reader who acts on this.
+       ============================================================ -->
+  <h2 id="risks">7 · Risks of acting on this</h2>
+  <table>
+    <tr><th>Risk</th><th>Likelihood</th><th>What it looks like</th></tr>
+    <tr>
+      <td><strong>Generalisation failure</strong> — the result holds in the studied population but not yours</td>
+      <td><span class="pill {{LIKELIHOOD_PILL_CLASS}}">{{LIKELIHOOD}}</span></td>
+      <td>{{SPECIFIC_FAILURE_MODE_FOR_THIS_READERS_CONTEXT}}</td>
+    </tr>
+    <tr>
+      <td><strong>Age</strong> — finding from {{YEAR}} may not reflect current {{TECH_OR_POPULATION_OR_CONDITIONS}}</td>
+      <td><span class="pill {{LIKELIHOOD_PILL_CLASS}}">{{LIKELIHOOD}}</span></td>
+      <td>{{HOW_THIS_DATES_AND_WHAT_WOULD_REVEAL_IT}}</td>
+    </tr>
+    <tr>
+      <td><strong>{{OTHER_NAMED_RISK_LIKE_REPLICATION_OR_COI}}</strong></td>
+      <td><span class="pill {{LIKELIHOOD_PILL_CLASS}}">{{LIKELIHOOD}}</span></td>
+      <td>{{DETAIL}}</td>
+    </tr>
+  </table>
+
+  <!-- ============================================================
+       §8 — Decide
+       For research: trust / apply / investigate further / dismiss.
+       Each checkbox names what you're committing to (or closing
+       off) by ticking it.
+       ============================================================ -->
+  <h2 id="decide">8 · Decision checklist</h2>
+  <p>Questions to walk through before {{ACTING_OR_CITING_OR_APPLYING}}:</p>
+  <div class="checklist">
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">Does my context fall inside the "likely transfers to" column above?</span>
+        <span class="why">If not, treat the result as suggestive at best — don't lean on it for a decision.</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">Have I read the paper itself, or only this summary?</span>
+        <span class="why">Summaries lose the load-bearing detail. If you're about to act on this, read the original method and results sections at minimum.</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">{{QUESTION_SPECIFIC_TO_THIS_PAPER_LIKE_HAS_THIS_BEEN_REPLICATED}}</span>
+        <span class="why">{{WHY_THIS_GATES_TRUST}}</span>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" />
+      <span>
+        <span class="q">What would change my mind?</span>
+        <span class="why">Name a specific finding or replication outcome that would flip your stance. Writing it down here makes future-you less likely to ignore it.</span>
+      </span>
+    </label>
+  </div>
+
+  <p class="small" style="margin-top:24px">
+    Generated from {{SOURCE_REF_WITH_LINK}} on a session focused on {{SESSION_CONTEXT}}.
+  </p>
+
+</main>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      darkMode: true,
+      background: "#161b22",
+      primaryColor: "#1c2230",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#2a313c",
+      lineColor: "#58a6ff",
+      secondaryColor: "#1c2230",
+      tertiaryColor: "#0e1116",
+      noteBkgColor: "#1c2230",
+      noteTextColor: "#e6edf3",
+      noteBorderColor: "#2a313c",
+      actorBkg: "#1c2230",
+      actorBorder: "#2a313c",
+      actorTextColor: "#e6edf3",
+      activationBkgColor: "#58a6ff",
+      sequenceNumberColor: "#0e1116"
+    }
+  });
+</script>
+
+</body>
+</html>
