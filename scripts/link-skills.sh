@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Links all skills in the repository to ~/.claude/skills, so that
-# they can be used by the local Claude CLI and by opencode (which
-# reads from the same directory).
+# Links all skills in the repository to ~/.config/opencode/skills, so
+# that they can be used by opencode.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="$HOME/.claude/skills"
+DEST="$HOME/.config/opencode/skills"
 
-# If ~/.claude/skills is a symlink that resolves into this repo, we'd end up
+# If ~/.config/opencode/skills is a symlink that resolves into this repo, we'd end up
 # writing the per-skill symlinks back into the repo's own skills/ tree. Detect
 # and bail out instead of polluting the working copy.
 if [ -L "$DEST" ]; then
