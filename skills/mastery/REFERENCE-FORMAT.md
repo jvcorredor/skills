@@ -31,6 +31,7 @@ The protocol, to be printed at the top of every reference doc:
 <head>
   <meta charset="UTF-8">
   <title>{Topic} — Reference</title>
+  <link rel="stylesheet" href="../assets/theme.css">
   <link rel="stylesheet" href="../assets/reference.css">
 </head>
 <body>

@@ -121,7 +121,7 @@ See [LESSON-FORMAT.md](./LESSON-FORMAT.md) for the full format. Key constraints:
 - **Recall before reason.** Force retrieval from memory before derivation or justification.
 - **Calibrated difficulty.** Tasks must be just beyond the edge of capability, but achievable in a timely manner. If the user can't make measurable progress in the session, the calibration is wrong — drop back.
 - **Spotter protocol for reference.** Any reference material used in the lesson must follow the spotter protocol. Never display the answer alongside the prompt.
-- **Beautiful and self-contained.** Clean typography, Tufte sensibility. The user will return to these.
+- **Beautiful and self-contained.** GitHub-dark theme: copy the skill's bundled [assets/theme.css](./assets/theme.css) into the workspace's `./assets/` as the baseline, then extend via `lesson.css`; don't rewrite from scratch. The user will return to these.
 - **Link to other lessons and reference docs** via HTML anchors.
 - **Recommend a primary source** — the highest-quality, highest-trust resource on the topic.
 - **Remind the user to ask follow-up questions.** You are their teacher.
