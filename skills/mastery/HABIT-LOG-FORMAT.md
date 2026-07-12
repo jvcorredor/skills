@@ -27,6 +27,16 @@ Next session: {date or "tomorrow morning"}
 
 {The user's daily minimum. E.g. "At least 10 minutes, first thing in the morning, before shower." Set in the first session. Never zero.}
 
+## Review queue
+
+Single source of truth for spaced reviews. Checked at the start of every session. A review is due = run it BEFORE advancing to new material. The spaced review IS the test of automaticity; without it, `[x]` marks are provisional.
+
+| Node | Last drilled | Next review | Interval | Protocol | Status |
+|------|-------------|-------------|----------|----------|--------|
+| {node name} | {date} | {date} | {Nd} | {what to re-implement, what test to run} | {due/clean/failed} |
+
+**Rule:** if a review is due and the user fails (can't reproduce clean from memory), halve the interval to 1 day and mark the tree node `[^]` for fortification. If the user passes, double the interval. This is the spaced repetition engine — it only works if we run it.
+
 ## Sessions
 
 ### {YYYY-MM-DD}
@@ -61,6 +71,15 @@ Next session: {date or "tomorrow morning"}
 - **A skip resets the current streak.** This is intentional. The cost of a skip should be visible.
 - **But a skip is not a failure.** It's a data point. The book: "It always becomes a battle of willpower by the end." Skips happen. The goal is not zero skips; the goal is that skips don't become the pattern.
 - **If the user skips twice in a week, flag it.** Gently. Ask what's getting in the way. Usually it's not lack of motivation — it's a calibration issue (lesson too hard, too long, too boring) or an environment issue (wrong time of day, no quiet space). Treat it as an engineering problem.
+
+## Irregular schedules
+
+The skill assumes daily practice. Reality: users with jobs, university, or caregiving responsibilities may not be able to practice daily. Acknowledge this without moralizing. Adapt spacing relative to actual session frequency, not calendar days. At lower frequency, more of each session goes to re-learning — name the consequence and move on.
+
+- **Do not moralize gaps.** The book: "Don't overreact to bad days." A 6-day gap is a data point, not a character flaw. Record it, adapt spacing, move on.
+- **Name the consequence.** At lower frequency, decay outpaces consolidation. More of each session goes to re-learning instead of advancing. This is the math, not a judgment.
+- **The review queue is how you detect decay.** If a node was `[x]` but the spaced review fails, it decays to `[^]` and the interval halves. This is the system working as designed — the review caught the decay before a new lesson built on sand.
+- **Set realistic intervals.** If the user can only practice 2-3 times per week, a "3-day" interval is effectively "next session." Calibrate intervals to session frequency, not calendar days.
 
 ## What this is not
 
