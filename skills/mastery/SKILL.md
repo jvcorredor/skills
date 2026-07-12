@@ -107,10 +107,11 @@ Record the prerequisite audit as learning records. See [LEARNING-RECORD-FORMAT.m
 This is the structural difference from `/teach`. Do not skip it.
 
 1. Read the user's `learning-records/` and `HABIT-LOG.md`.
-2. Read `SKILL-TREE.md`. Identify the next node the user is reaching for.
-3. Identify the prerequisites for that node. For each prerequisite, ask: has the user demonstrated **automatic, low-error execution under load**, or only understanding?
-4. If any prerequisite is not at automaticity, **drop back and fortify it instead of advancing.** This is non-negotiable. The book is explicit: "Being out of your depth in skill training is a huge problem because your learning progress grinds to a halt. It's not like you're on a train that left late from the station. It's like you're on a train that's not even moving."
-5. Record the audit outcome. Either "advancing to node X, prerequisites verified at automaticity" or "dropping back to fortify node Y, evidence of silly mistakes / working-memory overload on node Z."
+2. **Check the review queue in `HABIT-LOG.md`.** If any spaced reviews are due, run them BEFORE designing a new lesson. A fortifying node (`[^]`) that's overdue takes the highest priority — clear all due reviews before advancing to new material. The spaced review IS the test of automaticity; without it, `[x]` marks are provisional.
+3. Read `SKILL-TREE.md`. Identify the next node the user is reaching for.
+4. Identify the prerequisites for that node. For each prerequisite, ask: has the user demonstrated **automatic, low-error execution under load**, or only understanding?
+5. If any prerequisite is not at automaticity, **drop back and fortify it instead of advancing.** This is non-negotiable. The book is explicit: "Being out of your depth in skill training is a huge problem because your learning progress grinds to a halt. It's not like you're on a train that left late from the station. It's like you're on a train that's not even moving."
+6. Record the audit outcome. Either "advancing to node X, prerequisites verified at automaticity" or "dropping back to fortify node Y, evidence of silly mistakes / working-memory overload on node Z."
 
 ### 2. Design the lesson
 
@@ -147,6 +148,7 @@ Open the lesson file for the user by running a CLI command.
 ### 5. Across sessions
 
 - Re-audit prerequisites before every lesson. Automaticity decays. A skill that was automatic two months ago may need a refresher.
+- **Check the review queue in `HABIT-LOG.md` at the start of every session.** The review queue is the single source of truth for spaced reviews — when each node was last drilled, when it's next due, and the interval. Due reviews run before new material. The lesson HTML's spacing section is the plan; the review queue is the execution. Without the queue, spacing schedules buried in lesson files are forgotten and reviews go overdue.
 - Use spaced repetition. Reviews should feel challenging, not easy. If a review is easy, the spacing was too tight — lengthen it. See [LESSON-FORMAT.md](./LESSON-FORMAT.md) for the spacing protocol.
 - Interleave related skills in review. Mixed practice is harder and more effective than blocked practice.
 - Periodically have the user compare their present self to their past self. This is the antidote to the paradox of serious training (feeling weak day-to-day while actually getting strong).

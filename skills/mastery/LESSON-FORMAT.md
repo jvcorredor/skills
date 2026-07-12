@@ -13,6 +13,8 @@ In `/teach`, a lesson is optimized for **one tangible win** within the user's wo
    - Long think-pair-share type activities
    - Over-long single problems that take the whole session to solve once
    - Any activity that throttles the volume of cycles
+   
+   **From-blank-page re-implementation.** After tests pass, the user deletes the function bodies and re-implements from memory. This is the rep that builds automaticity. Tests passing is understanding; reproduction from a blank page is automaticity. **The agent deletes the bodies, not the user.** If the user deletes them, they get a last glance at the implementation immediately before re-implementing, which taints the recall assessment — it becomes recognition, not reproduction.
 
 3. **Concrete before abstract.** Always start with concrete examples. Layer abstractions only after the user has built a zoo of concrete examples to compress. Never open with a theorem, a definition, or an abstract framework. Open with a concrete problem, a concrete instance, a concrete example.
 
@@ -36,6 +38,9 @@ In `/teach`, a lesson is optimized for **one tangible win** within the user's wo
    - If the skill is being fortified after prior automaticity: review in 1 week.
    - If the skill is being reviewed after a successful prior review: double the interval.
    - If the user fails the review (can't recall, makes multiple silly mistakes): halve the interval and mark the tree node `[^]` for fortification.
+   - **Provisional pass:** tests pass but not clean first try (bugs fixed via test/agent feedback). Don't double the interval; hold steady or shorten slightly. The user understands the contract but hasn't reproduced it from memory — the distinction matters.
+   - **Fortifying nodes take priority.** A node marked `[^]` uses a 1-day interval and takes priority over new lessons. Clear all due reviews before advancing to new material. A fortifying node that's overdue is the highest-priority work in the session.
+   - **Record reviews in the review queue.** The next review date, interval, and protocol live in the review queue section of `HABIT-LOG.md`, not only in the lesson HTML. The lesson HTML is the plan; the review queue is the execution.
 
 9. **A primary source recommendation.** The most high-quality, high-trust resource on the topic. The user should read or watch this alongside the lesson. Lessons are not a substitute for primary sources — they are the practice arena.
 
@@ -137,6 +142,25 @@ A shared stylesheet is the first component every workspace earns: every lesson l
 - **No measurement.** If the user can't tell whether they're making progress, they will either coast (too easy) or drown (too hard) without knowing which.
 - **Too long.** A lesson that takes more than 30-45 minutes is too long. The user's focus will degrade. Split it.
 - **Too short on reps.** A lesson that takes 10 minutes and has 5 reps is too short on volume. Either add more reps or combine with another node.
+- **Tests pass after iteration is not automaticity.** The user must pass tests on the FIRST run from a blank page. If they run tests, see failures, fix, and run again — those fixes are debugging, not recall. The next attempt should be from a blank page again. "Learned a lot" + "had to run tests throughout" is the tell: that's iterating against the test set, not reproducing from memory.
+- **Tests are necessarily incomplete.** The test set can't probe every contract edge. The agent should verify contract correctness beyond the test set — construct probes for edge cases the tests don't cover (e.g., a reader that returns a non-EOF error, a writer that receives an empty buffer). Bugs the test set doesn't catch are where understanding and automaticity diverge.
+
+## Drill patterns
+
+### Predict-then-verify
+
+The user predicts each output from memory, runs the code once, compares, and writes one sentence per miss explaining why the actual differs from the prediction. Re-predict misses from memory and repeat until clean. Each prediction is a rep.
+
+This format directly serves "recall before reason" and produces high rep count in short time. It is especially effective for:
+- Distinguishing similar concepts (e.g., `io.EOF` vs `io.ErrUnexpectedEOF`)
+- Learning the behavior of stdlib functions across edge cases
+- Fortifying a distinction that has decayed after a gap
+
+Implementation: a single `main.go` with 10-20 cases, each printing a labeled line. The user writes predictions as comments before running. The code is the answer key — but the user sees output only after predicting, not before.
+
+### From-blank-page re-implementation
+
+After tests pass on an initial implementation, the agent deletes the function bodies and the user re-implements from memory. Run tests once at the end. Clean first try = automaticity. Bugs fixed via test feedback = understanding, not automaticity — re-do from blank page.
 
 ## The paradox of serious training
 
