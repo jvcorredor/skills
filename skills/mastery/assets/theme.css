@@ -57,7 +57,7 @@ body {
   padding: var(--space-5) var(--space-3);
 }
 
-main, header, section { max-width: var(--measure); margin-inline: auto; }
+body > * { max-width: var(--measure); margin-inline: auto; }
 
 h1, h2, h3, h4, h5, h6 {
   line-height: 1.25;
