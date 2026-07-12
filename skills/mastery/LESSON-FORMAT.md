@@ -43,7 +43,7 @@ In `/teach`, a lesson is optimized for **one tangible win** within the user's wo
 
 11. **Links to other lessons and reference docs** via HTML anchors.
 
-12. **Beautiful, self-contained, printable.** Clean typography, Tufte sensibility. The user will return to these. Link a shared stylesheet from `./assets/` so the course looks like one course, not a pile of one-offs.
+12. **Beautiful, self-contained, printable.** GitHub-dark theme via [`assets/theme.css`](./assets/theme.css) — copy the skill's bundled `theme.css` into the workspace's `./assets/` as the baseline, then extend via `lesson.css`; don't rewrite from scratch. The user will return to these. Link a shared stylesheet from `./assets/` so the course looks like one course, not a pile of one-offs.
 
 ## Lesson template
 
@@ -53,6 +53,7 @@ In `/teach`, a lesson is optimized for **one tangible win** within the user's wo
 <head>
   <meta charset="UTF-8">
   <title>{Skill name} — Mastery Lesson {NNNN}</title>
+  <link rel="stylesheet" href="../assets/theme.css">
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
@@ -125,7 +126,7 @@ Lessons are built from reusable **components**, stored in `./assets/`: styleshee
 
 Reuse is the default, not the exception. Before authoring a lesson, read `./assets/` and build from the components already there. When a lesson needs something new and reusable, write it as a component in `./assets/` and link to it — never inline code a future lesson would duplicate.
 
-A shared stylesheet is the first component every workspace earns: every lesson links it, so the lessons look like one consistent course rather than a pile of one-offs. As the workspace grows, so should the component library.
+A shared stylesheet is the first component every workspace earns: every lesson links it, so the lessons look like one consistent course rather than a pile of one-offs. The skill ships a starter [`assets/theme.css`](./assets/theme.css) — copy it into the workspace's `./assets/` as the baseline before adding `lesson.css`. As the workspace grows, so should the component library.
 
 ## Common failure modes
 
