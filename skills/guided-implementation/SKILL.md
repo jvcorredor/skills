@@ -1,6 +1,6 @@
 ---
 name: guided-implementation
-description: Pair-programming mode that builds a task in small approved units, explains each design decision, and checks the user's understanding before the next unit. Use when the user says "implement this with me", "guided implementation", "pair with me on this issue", "teach me while implementing", or invokes /guided-implementation. Plain "implement X" requests and explaining an existing diff belong elsewhere.
+description: Pair-programming mode that builds a task in small approved units, explains each design decision, and gates every unit on the user's approval. Use when the user says "implement this with me", "guided implementation", "pair with me on this issue", "teach me while implementing", or invokes /guided-implementation. Plain "implement X" requests and explaining an existing diff belong elsewhere.
 ---
 
 # Guided implementation
@@ -12,7 +12,6 @@ You are pairing with an experienced platform/software engineer who may be new to
 - **Unit**: one small change, independently explainable and verifiable, landing as one commit.
 - **Card**: the pitch for a unit, shown before it is built.
 - **Gate**: a stop where you wait for the user's reply.
-- **Check**: a retrieval question on the key decision of a finished unit.
 
 ## Permission boundary
 
@@ -64,7 +63,7 @@ On approval, build exactly that unit:
 
 Prefer the repo's conventions over new abstractions; keep the change small, idiomatic, and production-appropriate. When the work surfaces anything outside the approved unit (a new unit, an unsettled design fork that materially affects the codebase, an ambiguity, a verification failure whose fix needs wider scope), stop and ask, with your recommendation.
 
-### Report, check, next card
+### Report, next card
 
 Send one message, then gate:
 
@@ -73,19 +72,15 @@ Unit N done
   diff summary (git show --stat), excerpts or explanation of non-obvious code,
   commands run with results (the red's failing assertion, then the green),
   new risks / assumptions / follow-ups
-Check
-  one retrieval question
 Next: unit N+1
   the card
 ```
-
-The **check** asks about the decision, not the code: why this approach, what breaks under the alternative, what a caller must now do differently. Prefer prediction or transfer ("If we add a second backend, which file changes and which stays untouched?", "What would this test catch that the old one didn't?"). It is answerable in a sentence or two without scrolling back. Withhold the answer until the user replies.
 
 After the last unit, the wrap-up (below) takes the place of the next card.
 
 ### Handling the reply
 
-Address the check answer first: give the answer; when theirs was wrong or partial, explain the gap briefly, without a retry. "skip" earns a one-line note of the decision. Then act on the rest:
+The user reviews the diff and brings their own questions. Answer every question first, rigorously, with pointers into the diff. Questions alone leave the gate closed; build only on an explicit approval, which may share the reply. Then act on the rest:
 
 - **approve**: build the unit.
 - **revise** on an unbuilt card: re-present the card with the change, building nothing.
@@ -93,9 +88,9 @@ Address the check answer first: give the answer; when theirs was wrong or partia
 
 ## Autopilot
 
-"autopilot" covers all remaining units; "autopilot through unit N" covers a range. Either reply also approves the pending card. Build approved units back to back without gates or checks, still committing each one and posting a short per-unit summary (diff summary, commands with results, new risks).
+"autopilot" covers all remaining units; "autopilot through unit N" covers a range. Either reply also approves the pending card. Build approved units back to back without gates, still committing each one and posting a short per-unit summary (diff summary, commands with results, new risks).
 
-Autopilot still stops for: a unit absent from the approved plan, an unsettled design fork, a verification failure unfixable within the unit's scope, and anything in the always-ask column. At the end of the run, ask one check on the run's most important decision; after a bounded run, send it with the next card and resume gating. "guided" or "pause" restores the gates once the unit in progress finishes.
+Autopilot still stops for: a unit absent from the approved plan, an unsettled design fork, a verification failure unfixable within the unit's scope, and anything in the always-ask column. After a bounded run, send the next card and resume gating. "guided" or "pause" restores the gates once the unit in progress finishes.
 
 ## 3. Wrap-up
 
