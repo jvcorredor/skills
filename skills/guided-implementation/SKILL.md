@@ -1,6 +1,6 @@
 ---
 name: guided-implementation
-description: Pair-programming mode that builds a task in small approved units, explains each design decision, and checks the user's understanding before the next unit. Use when the user says "implement this with me", "guided implementation", "pair with me on this issue", "teach me while implementing", or invokes /guided-implementation. Plain "implement X" requests and explaining an existing diff belong elsewhere.
+description: Pair-programming mode that builds a task in small approved units, explains each design decision, and gates every unit twice: approve the work, then accept the result. Use when the user says "implement this with me", "guided implementation", "pair with me on this issue", "teach me while implementing", or invokes /guided-implementation. Plain "implement X" requests and explaining an existing diff belong elsewhere.
 ---
 
 # Guided implementation
@@ -11,15 +11,14 @@ You are pairing with an experienced platform/software engineer who may be new to
 
 - **Unit**: one small change, independently explainable and verifiable, landing as one commit.
 - **Card**: the pitch for a unit, shown before it is built.
-- **Gate**: a stop where you wait for the user's reply.
-- **Check**: a retrieval question on the key decision of a finished unit.
+- **Gate**: a stop where you wait for the user's reply. Each unit has two: the **card gate** (approve the work) and the **review gate** (accept the result).
 
 ## Permission boundary
 
 | Free | Granted by approval | Always ask |
 |---|---|---|
 | Read, search, `git log/diff/status/blame/show`, `gh issue/pr view` | Plan approval: create the branch or worktree the user's instructions call for | Dependency changes, generators, migrations, codegen not named on an approved card |
-| Existing tests, lint, typecheck as already configured, when they need no install step or external services | Unit approval: that unit's edits, any dependency change named on its card, its verification runs, and its one commit | Push, PR, any remote or live-cluster action |
+| Existing tests, lint, typecheck as already configured, when they need no install step or external services | Card approval: that unit's edits, any dependency change named on its card, and its verification runs. Acceptance at the review gate: that unit's one commit | Push, PR, any remote or live-cluster action |
 | | | A baseline run needing an install, Docker, or credentials: propose it as unit 0, carded like any other |
 
 You make every edit, test run, and commit yourself, so each explanation comes from the code you wrote. The session's record lives in commit bodies and the wrap-up; the repo gains only the agreed changes.
@@ -60,42 +59,45 @@ On approval, build exactly that unit:
 
 - **Behaviour change with a test harness**: write the test, run it, capture the red (the failing assertion). Implement, run it, capture the green. Place tests at the seams `tdd` describes, through public interfaces; the gates here stay in charge of the loop.
 - **Everything else** (config, docs, CI, refactor under existing tests): run the check that fits: the existing suite stays green, a lint, a dry-run, a `plan`.
-- **Commit**: one Conventional Commit. The body states the decision made and the main alternative rejected, in one or two lines.
+
+Leave the unit uncommitted; the commit waits for the review gate.
 
 Prefer the repo's conventions over new abstractions; keep the change small, idiomatic, and production-appropriate. When the work surfaces anything outside the approved unit (a new unit, an unsettled design fork that materially affects the codebase, an ambiguity, a verification failure whose fix needs wider scope), stop and ask, with your recommendation.
 
-### Report, check, next card
+### Review gate
 
-Send one message, then gate:
+Send the report, then gate. The report ends at the ask; the next card waits until the result is accepted.
 
 ```
-Unit N done
-  diff summary (git show --stat), excerpts or explanation of non-obvious code,
+Unit N built (uncommitted)
+  diff summary (git diff --stat, plus new files), excerpts or explanation of
+  non-obvious code, anything added beyond the card,
   commands run with results (the red's failing assertion, then the green),
   new risks / assumptions / follow-ups
-Check
-  one retrieval question
-Next: unit N+1
-  the card
+Ask: accept unit N?
 ```
 
-The **check** asks about the decision, not the code: why this approach, what breaks under the alternative, what a caller must now do differently. Prefer prediction or transfer ("If we add a second backend, which file changes and which stays untouched?", "What would this test catch that the old one didn't?"). It is answerable in a sentence or two without scrolling back. Withhold the answer until the user replies.
+### Handling replies
 
-After the last unit, the wrap-up (below) takes the place of the next card.
+At either gate the user brings their own questions. Answer every question first, rigorously, with pointers into the diff or code. Questions alone leave the gate closed; act only on an explicit decision, which may share the reply.
 
-### Handling the reply
-
-Address the check answer first: give the answer; when theirs was wrong or partial, explain the gap briefly, without a retry. "skip" earns a one-line note of the decision. Then act on the rest:
+At the **card gate**:
 
 - **approve**: build the unit.
-- **revise** on an unbuilt card: re-present the card with the change, building nothing.
-- **revise unit K: …** on a finished unit: a new card for the fix, landing as its own commit; existing history stays as it is. The fix card goes next; the pending card follows it.
+- **revise: …**: re-present the card with the change, building nothing.
+
+At the **review gate**:
+
+- **accept** (or **approve**): commit the unit as one Conventional Commit whose body states the decision made and the main alternative rejected, in one or two lines. Then send `Unit N committed: <sha> <subject>` with the next card, and gate. After the last unit, the wrap-up (below) takes the place of the next card.
+- **revise: …**: change the uncommitted unit, re-run its verification, and re-report at the review gate.
+
+At either gate, **revise unit K: …** on a committed unit queues a new card for the fix, landing as its own commit; existing history stays as it is. The fix card goes next; the pending card follows it.
 
 ## Autopilot
 
-"autopilot" covers all remaining units; "autopilot through unit N" covers a range. Either reply also approves the pending card. Build approved units back to back without gates or checks, still committing each one and posting a short per-unit summary (diff summary, commands with results, new risks).
+"autopilot" covers all remaining units; "autopilot through unit N" covers a range. Either reply also approves the pending card or accepts the pending result. Build approved units back to back without gates, committing each as soon as its verification passes, posting a short per-unit summary (diff summary, commands with results, new risks).
 
-Autopilot still stops for: a unit absent from the approved plan, an unsettled design fork, a verification failure unfixable within the unit's scope, and anything in the always-ask column. At the end of the run, ask one check on the run's most important decision; after a bounded run, send it with the next card and resume gating. "guided" or "pause" restores the gates once the unit in progress finishes.
+Autopilot still stops for: a unit absent from the approved plan, an unsettled design fork, a verification failure unfixable within the unit's scope, and anything in the always-ask column. After a bounded run, send the next card and resume gating. "guided" or "pause" restores the gates once the unit in progress finishes.
 
 ## 3. Wrap-up
 
