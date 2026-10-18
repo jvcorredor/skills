@@ -110,7 +110,7 @@ Park the ticket, comment on the PRD, and return to **Pick**. The loop keeps work
 
 ## Budget
 
-When a hook reports 5-hour usage above 70%, or the user says they are near the limit, finish the step in flight, merge or park the ticket, and go to **Stop**.
+Above 70% of the 5-hour limit, keep looping, but route read-only recon that touches no secrets to Flash, per the global routing rule. When the user says they are near the limit, or a call fails on the limit, finish the step in flight, merge or park the ticket, and go to **Stop**.
 
 ## 3. Stop
 
