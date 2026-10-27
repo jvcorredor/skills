@@ -2,7 +2,6 @@
 name: drive-prd
 description: Drive a PRD's tickets one at a time through implementer, independent review, fixes, CI, and merge, parking human-only work, until no agent-ready ticket remains.
 argument-hint: "[PRD issue number or URL; defaults to the session's PRD]"
-disable-model-invocation: true
 ---
 
 # Drive PRD
