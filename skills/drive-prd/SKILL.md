@@ -67,8 +67,8 @@ Launch three reviewer subagents in parallel, read-only, each on one **angle**. B
 | Angle | Looks for |
 |---|---|
 | Correctness | each acceptance criterion met; bugs, edge cases, error paths |
-| Tests | each new test fails without the change; behaviour tested through public interfaces; acceptance criteria with no test |
-| Fit | PRD intent, ADRs, `CONTEXT.md` vocabulary, repo conventions, scope creep; supply chain when dependencies, CI, images, or IaC change |
+| Tests | each new test fails without the change; behaviour tested through public interfaces; acceptance criteria with no test. For IaC, CI and config files, plan or validate output, or one negative case, is proof enough: never ask for a check that pins the repo's own text, config values or upstream shapes |
+| Fit | PRD intent, ADRs, `CONTEXT.md` vocabulary, repo conventions, scope creep; supply chain when dependencies, CI, images, or IaC change; any growth in CI wall time or check code, which must be justified |
 
 Each finding carries `path:line`, the claim, a concrete failure scenario, and a severity.
 
@@ -80,7 +80,7 @@ Read every finding and give it one verdict:
 
 - **fix**: real and inside the ticket's scope.
 - **follow-up**: real but outside it. Open an issue with `## Parent` naming the PRD, label `needs-triage`, and wire a blocking edge if it gates another ticket.
-- **reject**: wrong, duplicated, or not worth the change; give a one-line reason.
+- **reject**: wrong, duplicated, or not worth the change; give a one-line reason. Reject a finding whose only fix is another guard arm or regression test, unless it names a costly failure the existing checks miss. A finding about a check is fixed in that check.
 - **decide**: needs a product or design decision. This is a HITL block.
 
 Route any finding you doubt through the `verifier` agent before ruling; its evidence decides. Post the full verdict table as one PR comment.
