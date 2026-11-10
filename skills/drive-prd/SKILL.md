@@ -89,7 +89,13 @@ Route any finding you doubt through the `verifier` agent before ruling; its evid
 
 ### Fix
 
-Resume the same implementer with `SendMessage`, pointing at the verdict comment; it pushes fix commits to the PR branch. If it cannot be resumed, launch a fresh `implementer` pointed at the PR, the worktree, and the comment. Then the `verifier` agent checks the new commits against each **fix** verdict. Each fix gets one verdict: confirmed or refuted. A refuted fix starts the next round.
+Resume the same implementer with `SendMessage`, pointing at the verdict comment; it pushes fix commits to the PR branch. If it cannot be resumed, launch a fresh `implementer` pointed at the PR, the worktree, and the comment. Add to the brief:
+
+- The verdict table and every ruling you have made on this PRD (quote them, or link the comments) bind the fix. Change only what a **fix** verdict asks for.
+- For a fix to code, first write a test that fails without the fix, then fix, then run the full test suite and linters, not just the new test. IaC, CI and config fixes follow the Tests angle's proof rule instead.
+- Report each fix commit against the verdict it answers, and list any other change with its reason.
+
+Then the `verifier` agent checks the new commits against each **fix** verdict and the rulings. Each fix gets one verdict: confirmed or refuted. A change no verdict or ruling asks for, or one that contradicts a ruling, is refuted. A refuted fix starts the next round.
 
 *Done when:* every fix is confirmed. Two rounds without that is a HITL block.
 
