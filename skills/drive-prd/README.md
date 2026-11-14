@@ -1,6 +1,6 @@
 # drive-prd
 
-An orchestrator loop for Claude Code. Once a PRD and its tickets are on GitHub, Claude works through them one at a time: an implementer agent builds each ticket to a PR, three independent reviewers read it cold, Claude adjudicates their findings and gets the fixes made, then merges on green CI. Tickets that need you are parked with a question, and the loop moves on to everything they don't block.
+An orchestrator loop for Claude Code. Once a PRD and its tickets are on GitHub, Claude works through them under a WIP cap (one ticket building, at most three active in all, and tickets touching the same files run one after another): an implementer agent builds each ticket to a PR, three independent reviewers read it cold, Claude adjudicates their findings and gets the fixes made, and a fresh verifier posts a `VERDICT:` comment naming the PR's head sha. Claude merges on green CI plus a PASS verdict at the current head. Only blockers and shoulds that can be shown cause fixes; nits go to one follow-up issue. Tickets that need you are parked with a question, and the loop moves on to everything they don't block.
 
 ## Invoking
 
@@ -20,9 +20,9 @@ Nothing else waits on you. Invoking the skill authorizes pushes, PRs, comments, 
 
 ## What parks a ticket
 
-The implementer asks a design question; a review finding needs a product decision; fixes fail twice; CI is red for an outside cause twice; a rebase conflict needs judgement; branch protection wants a human; or the work touches secrets or a live cluster.
+The implementer asks a design question; a review finding needs a product decision; the fix budget (3 rounds, 5 for live-safety code) runs out or a check gets no answer; CI is red for an outside cause twice; a rebase conflict needs judgement; branch protection wants a human; or the work touches secrets or a live cluster.
 
-To unpark one, answer on the ticket and relabel it `ready-for-agent`. The next `/drive-prd` run picks it up.
+To unpark one, answer on the ticket and relabel it `ready-for-agent`. The next `/drive-prd` run picks it up at verification, with its fix-round count restarted.
 
 ## Resuming
 
