@@ -46,11 +46,11 @@ Assignment, labels, PR state, and comments are the record. After each ticket mer
 
 ## 2. Loop
 
-**WIP cap**, per orchestrator session: a ticket is *active* when claimed and not HITL-parked (a PR waiting only on someone else's merge stays active). At most 1 active ticket in Build and at most 3 active in total; a ticket in Build counts as its future PR. A full cap means wait, not start more. Each step ends on its completion criterion before the next starts.
+**WIP cap**, per orchestrator session: a ticket is *active* when claimed and not HITL-parked (a PR waiting only on someone else's merge stays active). At most 1 active ticket in Build and at most 3 active in total; a ticket in Build counts as its future PR. A full cap means wait, not start more; with room in the cap, **Pick** runs again even while other tickets sit in Review, Fix, or Verify, since background steps do not hold the loop. Each step ends on its completion criterion before the next starts.
 
 ### Pick
 
-Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. A ticket that touches the same files, modules, or ADR as an active ticket waits: such tickets run one after another. Claim it. A frontier ticket that already has a PR (unparked) re-enters at **Verify**: re-claim it and keep its PR and worktree; its round count restarts. Cap full, or only waiting tickets left: wait for an active ticket to merge or park. When **Stop** holds, go there.
+Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. A ticket that touches the same files, modules, or ADR as an active ticket waits: such tickets run one after another. Claim it. A frontier ticket that already has a PR (unparked) re-enters at **Verify**: re-claim it, mark the PR ready (`gh pr ready <n>`), and keep its PR and worktree; its round count restarts. Cap full, or only waiting tickets left: wait for an active ticket to merge or park. When **Stop** holds, go there.
 
 *Done when:* one ticket is claimed, or the cap or an overlap holds you.
 
