@@ -80,7 +80,7 @@ Each finding carries `path:line`, the claim, a concrete failure scenario, and a 
 
 Read every finding and give it one verdict:
 
-- **fix**: a blocker or should that can be shown, inside the ticket's scope. A nit never blocks, and a blocker or should that cannot be shown is a nit: collect nits in ONE follow-up issue per PRD (append to it if it exists).
+- **fix**: a blocker or should that can be shown, inside the ticket's scope. A nit never blocks, and a blocker or should that cannot be shown is downgraded to a nit: collect nits in ONE follow-up issue per PRD (append to it if it exists).
 - **follow-up**: real but outside it. Open an issue with `## Parent` naming the PRD, label `needs-triage`, and wire a blocking edge if it gates another ticket.
 - **reject**: wrong, duplicated, or not worth the change; give a one-line reason. Reject a finding whose only fix is another guard arm or regression test, unless it names a costly failure the existing checks miss. A finding about a check is fixed in that check.
 - **decide**: needs a product or design decision. This is a HITL block.
@@ -97,7 +97,7 @@ Resume the same implementer with `SendMessage`, pointing at the verdict comment;
 - For a fix to code, first write a test that fails without the fix, then fix, then run the full test suite and linters, not just the new test. IaC, CI and config fixes follow the Tests angle's proof rule instead.
 - Report each fix commit against the verdict it answers, and list any other change with its reason.
 
-**Fix budget:** 3 rounds, or 5 when the PR touches live-safety code (guards, applies, secrets, destroys, release scripts). Running out, or getting no answer, is a HITL block: the PR is parked.
+**Fix budget:** 3 rounds, or 5 when the PR touches live-safety code (guards, applies, secrets, destroys, release scripts). Running out, or getting no answer, is a HITL block: the PR is parked. When the human unparks it, the round count restarts.
 
 *Done when:* the fix commits are pushed. Go to **Verify**.
 
@@ -111,8 +111,8 @@ After every push that follows the last head verdict, unless that verdict carries
 
 1. Watch CI with `gh pr checks <pr> --watch` as a background command; its exit wakes you.
 2. Red, caused by the ticket's code: a fix round (counts toward the budget), then **Verify**. Red for any other cause: `gh run rerun <run-id> --failed` once; red again is a HITL block.
-3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then wait for CI again. Compare `git patch-id --stable` of the PR diff before and after. Changed: return to **Verify**. Unchanged: the verdict carries over; re-post that comment under the new sha with a line `Carried over from <old sha>: pure rebase`.
-4. Merge only when CI is green and the latest head verdict (a `VERDICT:` comment from a counted author) names the current head sha in full (`gh pr view <pr> --json headRefOid`) and says PASS or PASS+NOTES, and its ledger has no `[blocker]` or `[should]` line ending `→ open`. Merge with the repo's method and `--delete-branch`.
+3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then wait for CI again.
+4. Merge only when CI is green and the latest head verdict (a `VERDICT:` comment from a counted author) says PASS or PASS+NOTES, its ledger has no `[blocker]` or `[should]` line ending `→ open`, and it names the current head sha in full (`gh pr view <pr> --json headRefOid`) or its sha carries over by an unchanged `git patch-id --stable` (a pure rebase). The `merge-gate` agent computes the carry-over and reports `carried`. Merge with the repo's method and `--delete-branch`.
 5. Confirm the ticket closed; if the closing keyword missed, close it with a comment linking the PR.
 6. `git worktree remove ~/.claude/worktrees/<slug>`, delete the local branch, and comment on the PRD.
 
