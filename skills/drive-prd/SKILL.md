@@ -6,7 +6,7 @@ argument-hint: "[PRD issue number or URL; defaults to the session's PRD]"
 
 # Drive PRD
 
-You are the **orchestrator** of one PRD workstream. Subagents build, review, and verify; you pick tickets, adjudicate findings, and merge. Every ticket you claim ends **merged** or **parked**, and the loop runs until the frontier is empty and nothing is in flight.
+You are the **orchestrator** of one PRD workstream. Subagents build, review, and verify; you pick tickets, adjudicate findings, and merge. Every ticket you claim ends **merged** or **parked**, and the loop runs until **Stop** holds.
 
 The issue tracker and triage label vocabulary should have been provided to you (`docs/agents/` or the repo's `AGENTS.md`/`CLAUDE.md`). If not, tell the user to run `/setup-matt-pocock-skills`. Label names below are the canonical roles; use the repo's mapping.
 
@@ -26,7 +26,7 @@ The issue tracker and triage label vocabulary should have been provided to you (
   - branch protection or a required human review blocks the merge;
   - the work touches secrets or a live cluster.
 - **Severity**: *blocker* = the intended case is wrong; *should* = a real bug callers will hit; *nit* = everything else. Only a blocker or should that can be **shown** (a failing run or test, or a line the PR made wrong) blocks.
-- **Head verdict**: one PR comment from a cold `verifier`, first line `VERDICT: PASS|PASS+NOTES|FAIL @ <full 40-char head sha>`, then a ledger with one line per finding: `S<n> [blocker|should|nit] path:line claim → fixed|declined(<reason>)|open`. Your own read and the implementer's never count. A head verdict covers a later head only when `git patch-id --stable` of the PR diff is unchanged (a pure rebase); any other push needs a fresh one. Only comments whose author association is OWNER, MEMBER, or COLLABORATOR count as head verdicts.
+- **Head verdict**: one PR comment whose text a cold `verifier` writes to a file and you post verbatim, never writing or editing a `VERDICT:` yourself. First line `VERDICT: PASS|PASS+NOTES|FAIL @ <full 40-char head sha>`, then a ledger with one line per finding: `S<n> [blocker|should|nit] path:line claim → fixed|declined(<reason>)|open`. Your own read and the implementer's never count. A head verdict covers a later head only when `git patch-id --verbatim` of the PR diff is unchanged (a pure rebase); any other push needs a fresh one. Only comments whose author association is OWNER, MEMBER, or COLLABORATOR count. A PASS or PASS+NOTES whose ledger has a `[blocker]` or `[should]` line ending `→ open` counts as FAIL.
 
 ## Authority
 
@@ -46,11 +46,11 @@ Assignment, labels, PR state, and comments are the record. After each ticket mer
 
 ## 2. Loop
 
-**WIP cap**, per orchestrator session: at most 1 ticket in Build and at most 2 PRs in Review, Fix, or parked awaiting merge (a HITL-parked ticket does not count). A full cap means wait, not start more. Each step ends on its completion criterion before the next starts.
+**WIP cap**, per orchestrator session: a ticket is *active* when claimed and not HITL-parked (a PR waiting only on someone else's merge stays active). At most 1 active ticket in Build and at most 3 active in total; a ticket in Build counts as its future PR. A full cap means wait, not start more. Each step ends on its completion criterion before the next starts.
 
 ### Pick
 
-Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. A ticket that touches the same files, modules, or ADR as a ticket in flight waits: such tickets run one after another. Claim it. Cap full, or only waiting tickets left: wait for an in-flight ticket to merge or park. An empty frontier with nothing in flight sends you to **Stop**.
+Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. A ticket that touches the same files, modules, or ADR as an active ticket waits: such tickets run one after another. Claim it. A frontier ticket that already has a PR (unparked) re-enters at **Verify**: re-claim it and keep its PR and worktree; its round count restarts. Cap full, or only waiting tickets left: wait for an active ticket to merge or park. When **Stop** holds, go there.
 
 *Done when:* one ticket is claimed, or the cap or an overlap holds you.
 
@@ -97,22 +97,22 @@ Resume the same implementer with `SendMessage`, pointing at the verdict comment;
 - For a fix to code, first write a test that fails without the fix, then fix, then run the full test suite and linters, not just the new test. IaC, CI and config fixes follow the Tests angle's proof rule instead.
 - Report each fix commit against the verdict it answers, and list any other change with its reason.
 
-**Fix budget:** 3 rounds, or 5 when the PR touches live-safety code (guards, applies, secrets, destroys, release scripts). Running out, or getting no answer, is a HITL block: the PR is parked. When the human unparks it, the round count restarts.
+**Fix budget:** 3 rounds, or 5 when the PR touches live-safety code (guards, applies, secrets, destroys, release scripts). Running out, or getting no answer, is a HITL block: the PR is parked.
 
 *Done when:* the fix commits are pushed. Go to **Verify**.
 
 ### Verify
 
-After every push that follows the last head verdict, unless that verdict carries over, launch one fresh `verifier`, briefed without the implementer's report: PR number, head sha, the adjudication comment, the rulings, and the head verdict format. It checks the PR at the new head, each **fix** verdict and ruling included. A change no verdict or ruling asks for, or one that contradicts a ruling, is an open ledger line. FAIL needs an open blocker or should that can be shown.
+After every push, a rebase included, `merge-gate` decides whether the last head verdict carries over. If not, launch one fresh `verifier`, briefed without the implementer's report: PR number, head sha, the adjudication comment, the rulings, and the head verdict format. It checks the PR at the new head, each **fix** verdict and ruling included. A change no verdict or ruling asks for, or one that contradicts a ruling, is an open ledger line. FAIL needs an open blocker or should that can be shown.
 
-*Done when:* the latest head verdict names the current head. PASS or PASS+NOTES: go to **Merge**. FAIL: its open blocker and should lines become **fix** verdicts; another **Fix** round.
+*Done when:* the latest head verdict names the current head. PASS or PASS+NOTES: put each open `[nit]` line in the PRD's single nit issue, then go to **Merge**. FAIL: its open blocker and should lines become **fix** verdicts; another **Fix** round.
 
 ### Merge
 
 1. Watch CI with `gh pr checks <pr> --watch` as a background command; its exit wakes you.
 2. Red, caused by the ticket's code: a fix round (counts toward the budget), then **Verify**. Red for any other cause: `gh run rerun <run-id> --failed` once; red again is a HITL block.
-3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then wait for CI again.
-4. Merge only when CI is green and the latest head verdict (a `VERDICT:` comment from a counted author) says PASS or PASS+NOTES, its ledger has no `[blocker]` or `[should]` line ending `→ open`, and it names the current head sha in full (`gh pr view <pr> --json headRefOid`) or its sha carries over by an unchanged `git patch-id --stable` (a pure rebase). The `merge-gate` agent computes the carry-over and reports `carried`. Merge with the repo's method and `--delete-branch`.
+3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then return to **Verify** and wait for CI again.
+4. Merge only when CI is green and the latest head verdict (a `VERDICT:` comment from a counted author) is not FAIL and names the current head sha in full (`gh pr view <pr> --json headRefOid`), or carries over (`merge-gate` reports `carried`). Merge with the repo's method and `--delete-branch`.
 5. Confirm the ticket closed; if the closing keyword missed, close it with a comment linking the PR.
 6. `git worktree remove ~/.claude/worktrees/<slug>`, delete the local branch, and comment on the PRD.
 
@@ -128,7 +128,7 @@ Above 70% of the 5-hour limit, keep looping, but route read-only recon that touc
 
 ## 3. Stop
 
-The loop stops when the frontier is empty and nothing is in flight, or the budget runs out. Send one report:
+The loop stops when no active ticket can progress without the user and no frontier ticket can start (the frontier is empty, the cap is full, or every pick overlaps an active ticket), or the budget runs out. Send one report:
 
 - **Merged**: ticket → PR, one line each.
 - **Parked**: ticket, its question, your recommendation.
