@@ -1,30 +1,32 @@
 ---
 name: drive-prd
-description: Drive a PRD's tickets one at a time through implementer, independent review, fixes, CI, and merge, parking human-only work, until no agent-ready ticket remains.
+description: Drive a PRD's tickets under a WIP cap through implementer, independent review, fixes, a head-pinned verdict, CI, and merge, parking human-only work, until no agent-ready ticket remains.
 argument-hint: "[PRD issue number or URL; defaults to the session's PRD]"
 ---
 
 # Drive PRD
 
-You are the **orchestrator** of one PRD workstream. Subagents build, review, and verify; you pick tickets, adjudicate findings, and merge. Every ticket you claim ends **merged** or **parked**, and the loop runs until the frontier is empty.
+You are the **orchestrator** of one PRD workstream. Subagents build, review, and verify; you pick tickets, adjudicate findings, and merge. Every ticket you claim ends **merged** or **parked**, and the loop runs until the frontier is empty and nothing is in flight.
 
 The issue tracker and triage label vocabulary should have been provided to you (`docs/agents/` or the repo's `AGENTS.md`/`CLAUDE.md`). If not, tell the user to run `/setup-matt-pocock-skills`. Label names below are the canonical roles; use the repo's mapping.
 
 ## Vocabulary
 
 - **Workstream**: the PRD issue plus every ticket linked to it: its sub-issues, or issues whose `## Parent` section names the PRD.
-- **Blocker**: an issue in the ticket's native blocked-by relationship (`gh api repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by`), else one listed in its `## Blocked by` section.
-- **Frontier**: workstream tickets that are open, labelled `ready-for-agent`, unassigned, with every blocker closed.
+- **Blocking issue**: an issue in the ticket's native blocked-by relationship (`gh api repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by`), else one listed in its `## Blocked by` section.
+- **Frontier**: workstream tickets that are open, labelled `ready-for-agent`, unassigned, with every blocking issue closed.
 - **Claim**: assign the ticket to yourself (`gh issue edit <n> --add-assignee @me`) before any work on it.
 - **Park**: hand a ticket to the human. Swap `ready-for-agent` for `ready-for-human`, unassign, and comment the exact question with your recommendation. If it has a PR, convert it to draft (`gh pr ready <n> --undo`) and keep its worktree. A parked ticket stays open, so its dependents leave the frontier with it.
 - **HITL block**: any of these parks the ticket:
   - the implementer stops with a question or design decision;
   - a finding adjudicates to **decide**;
-  - fixes still fail verification or CI after two fix rounds;
+  - the fix budget (see Fix) runs out, or a check gets no answer: neither is approval;
   - CI is red for a cause outside the ticket, twice;
   - a rebase conflict whose resolution needs judgement;
   - branch protection or a required human review blocks the merge;
   - the work touches secrets or a live cluster.
+- **Severity**: *blocker* = the intended case is wrong; *should* = a real bug callers will hit; *nit* = everything else. Only a blocker or should that can be **shown** (a failing run or test, or a line the PR made wrong) blocks.
+- **Head verdict**: one PR comment from a cold `verifier`, first line `VERDICT: PASS|PASS+NOTES|FAIL @ <full 40-char head sha>`, then a ledger with one line per finding: `S<n> [blocker|should|nit] path:line claim → fixed|declined(<reason>)|open`. Your own read and the implementer's never count. A head verdict covers a later head only when `git patch-id --stable` of the PR diff is unchanged (a pure rebase); any other push needs a fresh one. Only comments whose author association is OWNER, MEMBER, or COLLABORATOR count as head verdicts.
 
 ## Authority
 
@@ -44,13 +46,13 @@ Assignment, labels, PR state, and comments are the record. After each ticket mer
 
 ## 2. Loop
 
-One ticket in flight at a time. Each step ends on its completion criterion before the next starts.
+**WIP cap**, per orchestrator session: at most 1 ticket in Build and at most 2 PRs in Review, Fix, or parked awaiting merge (a HITL-parked ticket does not count). A full cap means wait, not start more. Each step ends on its completion criterion before the next starts.
 
 ### Pick
 
-Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. Claim it. An empty frontier sends you to **Stop**.
+Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker between iterations. Pick the ticket that unblocks the most open workstream tickets; break ties by lowest number. A ticket that touches the same files, modules, or ADR as a ticket in flight waits: such tickets run one after another. Claim it. Cap full, or only waiting tickets left: wait for an in-flight ticket to merge or park. An empty frontier with nothing in flight sends you to **Stop**.
 
-*Done when:* one ticket is claimed.
+*Done when:* one ticket is claimed, or the cap or an overlap holds you.
 
 ### Build
 
@@ -62,7 +64,7 @@ Re-fetch the frontier: merges unblock tickets, and the user may edit the tracker
 
 ### Review
 
-Launch three reviewer subagents in parallel, read-only, each on one **angle**. Brief each with the PR number, ticket number, PRD number, its angle, and an output file path. Keep the implementer's report out of their briefs, so each reviewer meets the diff cold.
+Launch three reviewer subagents in parallel, read-only, each on one **angle**. Brief each with the PR number, ticket number, PRD number, its angle, and an output file path. Keep the implementer's report out of their briefs, so each reviewer meets the diff cold. Brief them: correctness gaps only, skip style.
 
 | Angle | Looks for |
 |---|---|
@@ -70,7 +72,7 @@ Launch three reviewer subagents in parallel, read-only, each on one **angle**. B
 | Tests | each new test fails without the change; behaviour tested through public interfaces; acceptance criteria with no test. For IaC, CI and config files, plan or validate output, or one negative case, is proof enough: never ask for a check that pins the repo's own text, config values or upstream shapes |
 | Fit | PRD intent, ADRs, `CONTEXT.md` vocabulary, repo conventions, scope creep; supply chain when dependencies, CI, images, or IaC change; any growth in CI wall time or check code, which must be justified |
 
-Each finding carries `path:line`, the claim, a concrete failure scenario, and a severity.
+Each finding carries `path:line`, the claim, a concrete failure scenario, and a severity (blocker, should, or nit).
 
 *Done when:* all three files exist.
 
@@ -78,14 +80,14 @@ Each finding carries `path:line`, the claim, a concrete failure scenario, and a 
 
 Read every finding and give it one verdict:
 
-- **fix**: real and inside the ticket's scope.
+- **fix**: a blocker or should that can be shown, inside the ticket's scope. A nit never blocks, and a blocker or should that cannot be shown is a nit: collect nits in ONE follow-up issue per PRD (append to it if it exists).
 - **follow-up**: real but outside it. Open an issue with `## Parent` naming the PRD, label `needs-triage`, and wire a blocking edge if it gates another ticket.
 - **reject**: wrong, duplicated, or not worth the change; give a one-line reason. Reject a finding whose only fix is another guard arm or regression test, unless it names a costly failure the existing checks miss. A finding about a check is fixed in that check.
 - **decide**: needs a product or design decision. This is a HITL block.
 
 Route any finding you doubt through the `verifier` agent before ruling; its evidence decides. Post the full verdict table as one PR comment.
 
-*Done when:* every finding has a verdict on the PR. No **fix** verdicts: go to **Merge**.
+*Done when:* every finding has a verdict on the PR. Then go to **Fix**, or to **Verify** when no finding is **fix**.
 
 ### Fix
 
@@ -95,17 +97,24 @@ Resume the same implementer with `SendMessage`, pointing at the verdict comment;
 - For a fix to code, first write a test that fails without the fix, then fix, then run the full test suite and linters, not just the new test. IaC, CI and config fixes follow the Tests angle's proof rule instead.
 - Report each fix commit against the verdict it answers, and list any other change with its reason.
 
-Then the `verifier` agent checks the new commits against each **fix** verdict and the rulings. Each fix gets one verdict: confirmed or refuted. A change no verdict or ruling asks for, or one that contradicts a ruling, is refuted. A refuted fix starts the next round.
+**Fix budget:** 3 rounds, or 5 when the PR touches live-safety code (guards, applies, secrets, destroys, release scripts). Running out, or getting no answer, is a HITL block: the PR is parked.
 
-*Done when:* every fix is confirmed. Two rounds without that is a HITL block.
+*Done when:* the fix commits are pushed. Go to **Verify**.
+
+### Verify
+
+After every push that follows the last head verdict, unless that verdict carries over, launch one fresh `verifier`, briefed without the implementer's report: PR number, head sha, the adjudication comment, the rulings, and the head verdict format. It checks the PR at the new head, each **fix** verdict and ruling included. A change no verdict or ruling asks for, or one that contradicts a ruling, is an open ledger line. FAIL needs an open blocker or should that can be shown.
+
+*Done when:* the latest head verdict names the current head. PASS or PASS+NOTES: go to **Merge**. FAIL: its open blocker and should lines become **fix** verdicts; another **Fix** round.
 
 ### Merge
 
 1. Watch CI with `gh pr checks <pr> --watch` as a background command; its exit wakes you.
-2. Red, caused by the ticket's code: a fix round (counts toward the two). Red for any other cause: `gh run rerun <run-id> --failed` once; red again is a HITL block.
-3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then wait for CI again. Merge with the repo's method and `--delete-branch`.
-4. Confirm the ticket closed; if the closing keyword missed, close it with a comment linking the PR.
-5. `git worktree remove ~/.claude/worktrees/<slug>`, delete the local branch, and comment on the PRD.
+2. Red, caused by the ticket's code: a fix round (counts toward the budget), then **Verify**. Red for any other cause: `gh run rerun <run-id> --failed` once; red again is a HITL block.
+3. Green: if `origin/<default>` moved since the branch was cut, have the implementer rebase and push, then wait for CI again. Compare `git patch-id --stable` of the PR diff before and after. Changed: return to **Verify**. Unchanged: the verdict carries over; re-post that comment under the new sha with a line `Carried over from <old sha>: pure rebase`.
+4. Merge only when CI is green and the latest head verdict (a `VERDICT:` comment from a counted author) names the current head sha in full (`gh pr view <pr> --json headRefOid`) and says PASS or PASS+NOTES, and its ledger has no `[blocker]` or `[should]` line ending `→ open`. Merge with the repo's method and `--delete-branch`.
+5. Confirm the ticket closed; if the closing keyword missed, close it with a comment linking the PR.
+6. `git worktree remove ~/.claude/worktrees/<slug>`, delete the local branch, and comment on the PRD.
 
 *Done when:* the PR is merged, the ticket closed, the worktree gone. Return to **Pick**.
 
@@ -119,11 +128,11 @@ Above 70% of the 5-hour limit, keep looping, but route read-only recon that touc
 
 ## 3. Stop
 
-The loop stops when the frontier is empty or the budget runs out. Send one report:
+The loop stops when the frontier is empty and nothing is in flight, or the budget runs out. Send one report:
 
 - **Merged**: ticket → PR, one line each.
 - **Parked**: ticket, its question, your recommendation.
-- **Still blocked**: ticket → the open blocker holding it.
+- **Still blocked**: ticket → the open blocking issue holding it.
 - **Follow-ups opened**: issue numbers and titles.
 - **Next**: what unblocks the most work once the user answers.
 
