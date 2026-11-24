@@ -25,7 +25,7 @@ skills/
 ./scripts/link-skills.sh
 ```
 
-This symlinks each directory under `skills/` into `~/.claude/skills` (Claude Code) and, when `~/.config/opencode` exists, into `~/.config/opencode/skills` (opencode). Run it from the main checkout, and again after adding or removing a skill. It replaces symlinks, never a real file or directory, and removes links to skills that no longer exist. The dotfiles repo runs it when a machine is set up.
+This symlinks each directory under `skills/` into `~/.claude/skills` (Claude Code) and, when `~/.config/opencode` exists, into `~/.config/opencode/skills` (opencode). Run it from the main checkout, and again after adding or removing a skill. It replaces symlinks, never a real file or directory, and removes its own links to skills that no longer exist in this repo. The dotfiles repo runs it when a machine is set up.
 
 Test: `bash scripts/test-link-skills.sh`.
 

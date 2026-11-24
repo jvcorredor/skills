@@ -28,9 +28,11 @@ fi
 
 conflicts=0
 for dest in "${dests[@]}"; do
+  [ -n "$dest" ] || continue
   mkdir -p "$dest"
 
   for skill_md in "$SRC"/*/SKILL.md; do
+    [ -e "$skill_md" ] || continue # no skills: the glob stays literal
     src="$(dirname "$skill_md")"
     target="$dest/$(basename "$src")"
     if [ -e "$target" ] && [ ! -L "$target" ]; then

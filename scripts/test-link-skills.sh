@@ -25,8 +25,11 @@ check "links every skill into the first destination" [ "$(find "$a" -type l | wc
 check "links every skill into the second destination" [ "$(find "$b" -type l | wc -l | tr -d ' ')" = "$count" ]
 check "a link points at the repo's skill" [ "$(readlink "$a/$skill")" = "$REPO/skills/$skill" ]
 
-# A second run changes nothing.
-check "a re-run prints nothing" [ -z "$(SKILLS_LINK_DESTS="$a:$b" bash "$link")" ]
+# A second run changes nothing. An empty entry in the list is skipped.
+status=0
+out="$(SKILLS_LINK_DESTS="$a::$b" bash "$link")" || status=$?
+check "a re-run prints nothing" [ -z "$out" ]
+check "a re-run exits 0" [ "$status" = 0 ]
 
 # A symlink that points elsewhere is replaced.
 ln -sfn "$tmp" "$a/$skill"
@@ -48,6 +51,15 @@ status=0
 SKILLS_LINK_DESTS="$b" bash "$link" >/dev/null 2>&1 || status=$?
 check "exits 1 on a real directory" [ "$status" = 1 ]
 check "leaves the real directory alone" [ -f "$b/$skill/keep" ]
+
+# A repo with no skills links nothing and creates no entry named "*".
+mkdir -p "$tmp/empty/scripts" "$tmp/empty/skills"
+cp "$link" "$tmp/empty/scripts/link-skills.sh"
+status=0
+out="$(SKILLS_LINK_DESTS="$tmp/c" bash "$tmp/empty/scripts/link-skills.sh")" || status=$?
+check "a repo with no skills prints nothing" [ -z "$out" ]
+check "a repo with no skills exits 0" [ "$status" = 0 ]
+check "a repo with no skills creates no entry" [ -z "$(ls -A "$tmp/c")" ]
 
 echo "scratch left in $tmp"
 [ "$fails" -eq 0 ] || exit 1

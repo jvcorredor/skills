@@ -115,7 +115,7 @@ Pick one, and say which and why in the report:
 - **Plain PlantUML sequence diagram** (`docs/diagrams/sequence/<flow>.puml`)
   when the flow is finer-grained than the model: function calls, HTTP
   request/response pairs, token exchanges, retries, e.g. "a sign-in
-  through rapt". Name each participant after the model element it lives
+  through the auth service". Name each participant after the model element it lives
   in where one exists (`participant "API (container)"`), and cite source
   files per participant in `'` comments.
 - Each step cites the code that performs it. A step inferred but not
