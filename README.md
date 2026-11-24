@@ -14,22 +14,29 @@ skills/
 │       ├── references/   # Additional documentation (optional)
 │       └── scripts/      # Helper scripts (optional)
 ├── scripts/
-│   ├── install.sh        # Install plugin for Claude Code
-│   └── uninstall.sh      # Remove plugin
+│   ├── link-skills.sh       # Link every skill into Claude Code and opencode
+│   └── test-link-skills.sh  # Tests for link-skills.sh
 └── README.md
 ```
 
 ## Installation
 
 ```bash
-./scripts/install.sh
+./scripts/link-skills.sh
 ```
 
-This will:
-1. Symlink the repo to `~/.claude/plugins/repos/skills`
-2. Register the plugin in `~/.claude/plugins/installed_plugins.json`
+This symlinks each directory under `skills/` into `~/.claude/skills` (Claude Code) and, when `~/.config/opencode` exists, into `~/.config/opencode/skills` (opencode). Run it from the main checkout, and again after adding or removing a skill. It replaces symlinks, never a real file or directory, and removes its own links to skills that no longer exist in this repo. The dotfiles repo runs it when a machine is set up.
 
-Restart Claude Code to use the plugin. New skills added to `skills/` will be available after restarting.
+Test: `bash scripts/test-link-skills.sh`.
+
+## Third-party skills
+
+Matt Pocock's skills are not copied here. In Claude Code they come from the `mattpocock-skills` plugin (`claude plugin install mattpocock-skills@claude-plugins-official`), which updates itself.
+
+Two skills in this repo are derived from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, © Matt Pocock):
+
+- `implement` is upstream's skill without `disable-model-invocation: true`. An agent cannot preload a skill that carries that flag, and the `implementer` agent preloads `implement`. A skill in `~/.claude/skills` is listed under its bare name, so this copy is the one that name loads.
+- `resolving-merge-conflicts` was removed upstream and is kept here.
 
 ## Creating a New Skill
 
